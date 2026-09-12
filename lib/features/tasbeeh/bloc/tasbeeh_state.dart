@@ -9,6 +9,10 @@ class TasbeehState extends Equatable {
   final List<String> availableDhikrs;
   final bool isSoundEnabled;
   final bool isHapticEnabled;
+  final int todayCount;
+  final int dailyGoal;
+  final int streakDays;
+  final Map<String, int> dailyHistory;
 
   const TasbeehState({
     this.currentCount = 0,
@@ -28,6 +32,10 @@ class TasbeehState extends Equatable {
     ],
     this.isSoundEnabled = true,
     this.isHapticEnabled = true,
+    this.todayCount = 0,
+    this.dailyGoal = 100,
+    this.streakDays = 0,
+    this.dailyHistory = const {},
   });
 
   TasbeehState copyWith({
@@ -39,6 +47,10 @@ class TasbeehState extends Equatable {
     List<String>? availableDhikrs,
     bool? isSoundEnabled,
     bool? isHapticEnabled,
+    int? todayCount,
+    int? dailyGoal,
+    int? streakDays,
+    Map<String, int>? dailyHistory,
   }) {
     return TasbeehState(
       currentCount: currentCount ?? this.currentCount,
@@ -49,6 +61,10 @@ class TasbeehState extends Equatable {
       availableDhikrs: availableDhikrs ?? this.availableDhikrs,
       isSoundEnabled: isSoundEnabled ?? this.isSoundEnabled,
       isHapticEnabled: isHapticEnabled ?? this.isHapticEnabled,
+      todayCount: todayCount ?? this.todayCount,
+      dailyGoal: dailyGoal ?? this.dailyGoal,
+      streakDays: streakDays ?? this.streakDays,
+      dailyHistory: dailyHistory ?? this.dailyHistory,
     );
   }
 
@@ -62,5 +78,9 @@ class TasbeehState extends Equatable {
         availableDhikrs,
         isSoundEnabled,
         isHapticEnabled,
+        todayCount,
+        dailyGoal,
+        streakDays,
+        dailyHistory,
       ];
 }

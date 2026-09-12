@@ -20,17 +20,26 @@ class TasbeehBloc extends Bloc<TasbeehEvent, TasbeehState> {
     on<SelectDhikrEvent>(_onSelectDhikr);
     on<ToggleSoundEvent>(_onToggleSound);
     on<ToggleHapticEvent>(_onToggleHaptic);
+    on<SetDailyGoalEvent>(_onSetDailyGoal);
   }
 
   void _onLoadTasbeeh(LoadTasbeehEvent event, Emitter<TasbeehState> emit) {
     final total = preferenceService.getTasbeehTotal();
     final sound = preferenceService.isTasbeehSoundEnabled();
     final haptic = preferenceService.isTasbeehHapticEnabled();
+    final today = preferenceService.getTodayTasbeehCount();
+    final goal = preferenceService.getTasbeehDailyGoal();
+    final streak = preferenceService.getTasbeehStreak();
+    final history = preferenceService.getTasbeehDailyHistory();
 
     emit(state.copyWith(
       totalLifetimeCount: total,
       isSoundEnabled: sound,
       isHapticEnabled: haptic,
+      todayCount: today,
+      dailyGoal: goal,
+      streakDays: streak,
+      dailyHistory: history,
     ));
   }
 
@@ -41,6 +50,9 @@ class TasbeehBloc extends Bloc<TasbeehEvent, TasbeehState> {
     final newCount = state.currentCount + 1;
     final newTotal = state.totalLifetimeCount + 1;
     await preferenceService.incrementTasbeehTotal();
+    final newToday = await preferenceService.incrementTodayTasbeeh();
+    final newStreak = preferenceService.getTasbeehStreak();
+    final updatedHistory = preferenceService.getTasbeehDailyHistory();
 
     int newCycle = state.currentCycle;
     int displayCount = newCount;
@@ -63,6 +75,9 @@ class TasbeehBloc extends Bloc<TasbeehEvent, TasbeehState> {
       currentCount: displayCount,
       currentCycle: newCycle,
       totalLifetimeCount: newTotal,
+      todayCount: newToday,
+      streakDays: newStreak,
+      dailyHistory: updatedHistory,
     ));
   }
 
@@ -93,5 +108,10 @@ class TasbeehBloc extends Bloc<TasbeehEvent, TasbeehState> {
     final updated = !state.isHapticEnabled;
     await preferenceService.setTasbeehHaptic(updated);
     emit(state.copyWith(isHapticEnabled: updated));
+  }
+
+  Future<void> _onSetDailyGoal(SetDailyGoalEvent event, Emitter<TasbeehState> emit) async {
+    await preferenceService.setTasbeehDailyGoal(event.goal);
+    emit(state.copyWith(dailyGoal: event.goal));
   }
 }

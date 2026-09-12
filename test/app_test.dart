@@ -6,6 +6,8 @@ import 'package:azkari/features/prayer_times/data/prayer_calculator.dart';
 import 'package:azkari/features/quran/models/juz_model.dart';
 import 'package:azkari/features/quran/models/surah_model.dart';
 import 'package:azkari/features/quran/data/quran_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:azkari/core/services/preference_service.dart';
 import 'package:azkari/features/azkar/models/zikr_model.dart';
 import 'package:azkari/features/azkar/models/asmaa_allah_model.dart';
 
@@ -20,7 +22,7 @@ void main() {
     });
 
     test('Formats countdown duration correctly', () {
-      final duration = const Duration(hours: 2, minutes: 15, seconds: 30);
+      const duration = Duration(hours: 2, minutes: 15, seconds: 30);
       expect(ArabicNumbers.formatCountdown(duration), '٠٢:١٥:٣٠');
     });
   });
@@ -263,6 +265,43 @@ void main() {
       final lastSurah = segmentsJuz30.last['surah'] as SurahModel;
       expect(lastSurah.number, 114);
       expect(lastSurah.nameAr, 'الناس');
+    });
+  });
+
+  group('Tasbeeh Daily History & Monthly Tracking Test', () {
+    late PreferenceService prefsService;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      prefsService = PreferenceService(prefs);
+    });
+
+    test('Daily goal defaults to 100 and can be updated', () async {
+      expect(prefsService.getTasbeehDailyGoal(), 100);
+      await prefsService.setTasbeehDailyGoal(300);
+      expect(prefsService.getTasbeehDailyGoal(), 300);
+    });
+
+    test('Today tasbeeh increments correctly', () async {
+      expect(prefsService.getTodayTasbeehCount(), 0);
+      await prefsService.incrementTodayTasbeeh();
+      await prefsService.incrementTodayTasbeeh();
+      await prefsService.incrementTodayTasbeeh();
+      expect(prefsService.getTodayTasbeehCount(), 3);
+    });
+
+    test('Monthly data returns mapping for all days in month', () {
+      final monthly = prefsService.getMonthlyTasbeeh(2026, 9); // September has 30 days
+      expect(monthly.length, 30);
+      expect(monthly[1], 0);
+      expect(monthly[30], 0);
+    });
+
+    test('Streak calculation works for active days', () async {
+      expect(prefsService.getTasbeehStreak(), 0);
+      await prefsService.incrementTodayTasbeeh();
+      expect(prefsService.getTasbeehStreak(), 1);
     });
   });
 }

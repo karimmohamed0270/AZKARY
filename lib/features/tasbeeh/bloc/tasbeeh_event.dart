@@ -34,3 +34,11 @@ class SelectDhikrEvent extends TasbeehEvent {
 class ToggleSoundEvent extends TasbeehEvent {}
 
 class ToggleHapticEvent extends TasbeehEvent {}
+
+class SetDailyGoalEvent extends TasbeehEvent {
+  final int goal;
+  const SetDailyGoalEvent(this.goal);
+
+  @override
+  List<Object?> get props => [goal];
+}

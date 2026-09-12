@@ -26,6 +26,8 @@ class PreferenceService {
   static const String _keyTasbeehTotal = 'tasbeeh_total_count';
   static const String _keyTasbeehSound = 'tasbeeh_sound_enabled';
   static const String _keyTasbeehHaptic = 'tasbeeh_haptic_enabled';
+  static const String _keyTasbeehHistory = 'tasbeeh_daily_history';
+  static const String _keyTasbeehDailyGoal = 'tasbeeh_daily_goal';
 
   // Notifications
   static const String _keyAdhanNotifications = 'adhan_notifications_enabled';
@@ -152,6 +154,78 @@ class PreferenceService {
 
   bool isTasbeehHapticEnabled() => _prefs.getBool(_keyTasbeehHaptic) ?? true;
   Future<void> setTasbeehHaptic(bool enabled) => _prefs.setBool(_keyTasbeehHaptic, enabled);
+
+  // --- Tasbeeh Daily History & Goal ---
+  int getTasbeehDailyGoal() => _prefs.getInt(_keyTasbeehDailyGoal) ?? 100;
+  Future<void> setTasbeehDailyGoal(int goal) => _prefs.setInt(_keyTasbeehDailyGoal, goal);
+
+  Map<String, int> getTasbeehDailyHistory() {
+    final raw = _prefs.getString(_keyTasbeehHistory);
+    if (raw == null) return {};
+    try {
+      final decoded = json.decode(raw) as Map<String, dynamic>;
+      return decoded.map((k, v) => MapEntry(k, (v as num).toInt()));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  int getTodayTasbeehCount() {
+    final todayKey = _formatDateKey(DateTime.now());
+    final history = getTasbeehDailyHistory();
+    return history[todayKey] ?? 0;
+  }
+
+  Future<int> incrementTodayTasbeeh() async {
+    final todayKey = _formatDateKey(DateTime.now());
+    final history = getTasbeehDailyHistory();
+    final current = history[todayKey] ?? 0;
+    final updated = current + 1;
+    history[todayKey] = updated;
+    await _prefs.setString(_keyTasbeehHistory, json.encode(history));
+    return updated;
+  }
+
+  int getTasbeehStreak() {
+    final history = getTasbeehDailyHistory();
+    final now = DateTime.now();
+    int streak = 0;
+
+    DateTime checkDate = DateTime(now.year, now.month, now.day);
+    final todayKey = _formatDateKey(checkDate);
+    if ((history[todayKey] ?? 0) == 0) {
+      // Check if there was an active streak ending yesterday
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    }
+
+    while (true) {
+      final key = _formatDateKey(checkDate);
+      final count = history[key] ?? 0;
+      if (count > 0) {
+        streak++;
+        checkDate = checkDate.subtract(const Duration(days: 1));
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  Map<int, int> getMonthlyTasbeeh(int year, int month) {
+    final history = getTasbeehDailyHistory();
+    final Map<int, int> monthlyData = {};
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final key = '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+      monthlyData[day] = history[key] ?? 0;
+    }
+    return monthlyData;
+  }
+
+  String _formatDateKey(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
 
   // --- Notifications ---
   bool isAdhanNotificationEnabled() => _prefs.getBool(_keyAdhanNotifications) ?? true;

@@ -29,7 +29,8 @@ class SurahDetailPage extends StatefulWidget {
 class _SurahDetailPageState extends State<SurahDetailPage> {
   final ScrollController _scrollController = ScrollController();
   int _readingMode = 0; // 0: App Theme, 1: Sepia Parchment, 2: Dark Night
-  bool _isContinuous = true; // True: Continuous Mushaf text ("ورا بعض"), False: Cards
+  bool _isContinuous =
+      true; // True: Continuous Mushaf text ("ورا بعض"), False: Cards
   int? _selectedAyahNumber;
 
   @override
@@ -92,7 +93,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
         } else {
           // Default Theme (Light / Dark)
           pageBg = isDark ? AppColors.backgroundDark : const Color(0xFFF6F8F7);
-          textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+          textColor = isDark
+              ? AppColors.textPrimaryDark
+              : AppColors.textPrimaryLight;
           cardBg = isDark ? AppColors.cardDark : Colors.white;
           borderOrnamentColor = isDark
               ? AppColors.gold.withValues(alpha: 0.3)
@@ -118,10 +121,14 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
               // Toggle between Continuous Mushaf View and Cards View
               IconButton(
                 icon: Icon(
-                  _isContinuous ? Icons.view_agenda_outlined : Icons.menu_book_rounded,
+                  _isContinuous
+                      ? Icons.view_agenda_outlined
+                      : Icons.menu_book_rounded,
                   color: textColor,
                 ),
-                tooltip: _isContinuous ? 'عرض كبطاقات منفصلة' : 'عرض متصل (المصحف)',
+                tooltip: _isContinuous
+                    ? 'عرض كبطاقات منفصلة'
+                    : 'عرض متصل (المصحف)',
                 onPressed: () {
                   setState(() {
                     _isContinuous = !_isContinuous;
@@ -141,27 +148,29 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             ],
           ),
           body: ayahs.isEmpty
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                )
               : _isContinuous
-                  ? _buildContinuousMushafView(
-                      context: context,
-                      surah: surah,
-                      ayahs: ayahs,
-                      state: state,
-                      textColor: textColor,
-                      cardBg: cardBg,
-                      borderOrnamentColor: borderOrnamentColor,
-                      isDark: isDark,
-                    )
-                  : _buildCardsView(
-                      context: context,
-                      surah: surah,
-                      ayahs: ayahs,
-                      state: state,
-                      textColor: textColor,
-                      cardBg: cardBg,
-                      isDark: isDark,
-                    ),
+              ? _buildContinuousMushafView(
+                  context: context,
+                  surah: surah,
+                  ayahs: ayahs,
+                  state: state,
+                  textColor: textColor,
+                  cardBg: cardBg,
+                  borderOrnamentColor: borderOrnamentColor,
+                  isDark: isDark,
+                )
+              : _buildCardsView(
+                  context: context,
+                  surah: surah,
+                  ayahs: ayahs,
+                  state: state,
+                  textColor: textColor,
+                  cardBg: cardBg,
+                  isDark: isDark,
+                ),
         );
       },
     );
@@ -186,9 +195,12 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
     // For Al-Fatiha: Ayah 1 is Bismillah itself.
     // For others (2..114 except 9): Bismillah is shown in the header ornament.
-    final AyahModel? fatihaBismillahAyah = isAlFatiha && ayahs.isNotEmpty ? ayahs[0] : null;
-    final List<AyahModel> continuousAyahs =
-        isAlFatiha && ayahs.isNotEmpty ? ayahs.sublist(1) : ayahs;
+    final AyahModel? fatihaBismillahAyah = isAlFatiha && ayahs.isNotEmpty
+        ? ayahs[0]
+        : null;
+    final List<AyahModel> continuousAyahs = isAlFatiha && ayahs.isNotEmpty
+        ? ayahs.sublist(1)
+        : ayahs;
 
     return ListView(
       controller: _scrollController,
@@ -213,13 +225,20 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 22.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18.0,
+              vertical: 22.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Calligraphic Bismillah for Surahs 2..114 (except At-Tawbah)
                 if (!isAlFatiha && !isAtTawbah)
-                  _buildBismillahHeader(textColor, borderOrnamentColor, state.fontSize),
+                  _buildBismillahHeader(
+                    textColor,
+                    borderOrnamentColor,
+                    state.fontSize,
+                  ),
 
                 // For Al-Fatiha: Centered Bismillah as Verse 1 with Ayah End Mark ﴿١﴾
                 if (isAlFatiha && fatihaBismillahAyah != null)
@@ -247,7 +266,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                         textColor: textColor,
                       ),
                     ),
-                    textAlign: ayahs.length <= 6 ? TextAlign.center : TextAlign.justify,
+                    textAlign: ayahs.length <= 6
+                        ? TextAlign.center
+                        : TextAlign.justify,
                     textDirection: TextDirection.rtl,
                   ),
                 ),
@@ -273,9 +294,15 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     final List<InlineSpan> spans = [];
 
     for (final ayah in ayahs) {
-      final cleanText = _getCleanAyahText(widget.surahNumber, ayah.numberInSurah, ayah.text);
+      final cleanText = _getCleanAyahText(
+        widget.surahNumber,
+        ayah.numberInSurah,
+        ayah.text,
+      );
       final isBookmarked = state.bookmarks.any(
-        (b) => b['surah_number'] == widget.surahNumber && b['ayah_number'] == ayah.numberInSurah,
+        (b) =>
+            b['surah_number'] == widget.surahNumber &&
+            b['ayah_number'] == ayah.numberInSurah,
       );
       final isSelected = _selectedAyahNumber == ayah.numberInSurah;
 
@@ -289,11 +316,19 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             color: isSelected ? AppColors.primary : textColor,
             backgroundColor: isSelected
                 ? AppColors.primary.withValues(alpha: 0.16)
-                : (isBookmarked ? AppColors.gold.withValues(alpha: 0.22) : null),
+                : (isBookmarked
+                      ? AppColors.gold.withValues(alpha: 0.22)
+                      : null),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           ),
           recognizer: TapGestureRecognizer()
-            ..onTap = () => _showAyahActionSheet(context, ayah, surah, cleanText, isBookmarked),
+            ..onTap = () => _showAyahActionSheet(
+              context,
+              ayah,
+              surah,
+              cleanText,
+              isBookmarked,
+            ),
         ),
       );
 
@@ -306,23 +341,34 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             height: 2.3,
             color: isBookmarked
                 ? AppColors.gold
-                : (_readingMode == 1 ? const Color(0xFF8C6228) : AppColors.primary),
+                : (_readingMode == 1
+                      ? const Color(0xFF8C6228)
+                      : AppColors.primary),
             fontWeight: FontWeight.bold,
           ),
           recognizer: TapGestureRecognizer()
-            ..onTap = () => _showAyahActionSheet(context, ayah, surah, cleanText, isBookmarked),
+            ..onTap = () => _showAyahActionSheet(
+              context,
+              ayah,
+              surah,
+              cleanText,
+              isBookmarked,
+            ),
         ),
       );
 
       // End of Juz indicator if this ayah concludes a Juz
       final completedJuzMatches = JuzModel.allJuzs.where(
-        (j) => j.endSurahNum == widget.surahNumber && j.endAyah == ayah.numberInSurah,
+        (j) =>
+            j.endSurahNum == widget.surahNumber &&
+            j.endAyah == ayah.numberInSurah,
       );
       if (completedJuzMatches.isNotEmpty) {
         final cJuz = completedJuzMatches.first;
         spans.add(
           TextSpan(
-            text: '\n\n۩ نهاية الجزء ${ArabicNumbers.convert(cJuz.number)} (${cJuz.name}) ۩\n\n',
+            text:
+                '\n\n۩ نهاية الجزء ${ArabicNumbers.convert(cJuz.number)} (${cJuz.name}) ۩\n\n',
             style: TextStyle(
               fontSize: (state.fontSize * 0.9).clamp(16.0, 26.0),
               fontWeight: FontWeight.bold,
@@ -354,13 +400,16 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     return Center(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => _showAyahActionSheet(context, ayah, surah, cleanText, isBookmarked),
+        onTap: () =>
+            _showAyahActionSheet(context, ayah, surah, cleanText, isBookmarked),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.primary.withValues(alpha: 0.14)
-                : (isBookmarked ? AppColors.gold.withValues(alpha: 0.16) : Colors.transparent),
+                : (isBookmarked
+                      ? AppColors.gold.withValues(alpha: 0.16)
+                      : Colors.transparent),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text.rich(
@@ -394,7 +443,11 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   }
 
   /// Calligraphic Bismillah Header with decorative Islamic motifs for Surahs 2..114
-  Widget _buildBismillahHeader(Color textColor, Color ornamentColor, double fontSize) {
+  Widget _buildBismillahHeader(
+    Color textColor,
+    Color ornamentColor,
+    double fontSize,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 22, top: 4),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -415,7 +468,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
               style: TextStyle(
                 fontSize: (fontSize * 1.05).clamp(20.0, 32.0),
                 fontWeight: FontWeight.bold,
-                color: _readingMode == 1 ? const Color(0xFF6B4518) : AppColors.primary,
+                color: _readingMode == 1
+                    ? const Color(0xFF6B4518)
+                    : AppColors.primary,
               ),
             ),
           ),
@@ -449,12 +504,18 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
         final ayahIndex = index - 1;
         final ayah = ayahs[ayahIndex];
-        final cleanText = _getCleanAyahText(widget.surahNumber, ayah.numberInSurah, ayah.text);
+        final cleanText = _getCleanAyahText(
+          widget.surahNumber,
+          ayah.numberInSurah,
+          ayah.text,
+        );
         final isBookmarked = state.bookmarks.any(
-          (b) => b['surah_number'] == widget.surahNumber && b['ayah_number'] == ayah.numberInSurah,
+          (b) =>
+              b['surah_number'] == widget.surahNumber &&
+              b['ayah_number'] == ayah.numberInSurah,
         );
 
-        final cardWidget = Card(
+        return Card(
           color: cardBg,
           margin: const EdgeInsets.symmetric(vertical: 6),
           shape: RoundedRectangleBorder(
@@ -472,7 +533,10 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
@@ -490,18 +554,22 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                       children: [
                         IconButton(
                           icon: Icon(
-                            isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                            isBookmarked
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
                             color: isBookmarked ? AppColors.gold : Colors.grey,
                             size: 22,
                           ),
                           tooltip: isBookmarked ? 'إزالة الفاصل' : 'إضافة فاصل',
                           onPressed: () {
-                            context.read<QuranBloc>().add(ToggleBookmarkEvent(
-                                  surahNumber: widget.surahNumber,
-                                  surahName: surah?.nameAr ?? '',
-                                  ayahNumber: ayah.numberInSurah,
-                                  ayahText: cleanText,
-                                ));
+                            context.read<QuranBloc>().add(
+                              ToggleBookmarkEvent(
+                                surahNumber: widget.surahNumber,
+                                surahName: surah?.nameAr ?? '',
+                                ayahNumber: ayah.numberInSurah,
+                                ayahText: cleanText,
+                              ),
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
@@ -515,14 +583,20 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.history, color: Colors.grey, size: 22),
+                          icon: const Icon(
+                            Icons.history,
+                            color: Colors.grey,
+                            size: 22,
+                          ),
                           tooltip: 'حفظ كآخر قراءة',
                           onPressed: () {
-                            context.read<QuranBloc>().add(SaveLastReadEvent(
-                                  surahNumber: widget.surahNumber,
-                                  surahName: surah?.nameAr ?? '',
-                                  ayahNumber: ayah.numberInSurah,
-                                ));
+                            context.read<QuranBloc>().add(
+                              SaveLastReadEvent(
+                                surahNumber: widget.surahNumber,
+                                surahName: surah?.nameAr ?? '',
+                                ayahNumber: ayah.numberInSurah,
+                              ),
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('تم حفظ موضع القراءة'),
@@ -532,12 +606,19 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.copy, color: Colors.grey, size: 20),
+                          icon: const Icon(
+                            Icons.copy,
+                            color: Colors.grey,
+                            size: 20,
+                          ),
                           tooltip: 'نسخ الآية',
                           onPressed: () {
-                            Clipboard.setData(ClipboardData(
-                              text: '$cleanText ﴿${ArabicNumbers.convert(ayah.numberInSurah)}﴾ [سورة ${surah?.nameAr ?? ""}]',
-                            ));
+                            Clipboard.setData(
+                              ClipboardData(
+                                text:
+                                    '$cleanText ﴿${ArabicNumbers.convert(ayah.numberInSurah)}﴾ [سورة ${surah?.nameAr ?? ""}]',
+                              ),
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('تم نسخ الآية إلى الحافظة'),
@@ -556,7 +637,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                 // Ayah Text aligned properly without unnatural justification spaces
                 Text(
                   cleanText,
-                  textAlign: cleanText.length < 50 ? TextAlign.center : TextAlign.right,
+                  textAlign: cleanText.length < 50
+                      ? TextAlign.center
+                      : TextAlign.right,
                   textDirection: TextDirection.rtl,
                   style: TextStyle(
                     fontSize: state.fontSize,
@@ -568,51 +651,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
               ],
             ),
           ),
-        );
-
-        final completedJuzMatches = JuzModel.allJuzs.where(
-          (j) => j.endSurahNum == widget.surahNumber && j.endAyah == ayah.numberInSurah,
-        );
-
-        if (completedJuzMatches.isEmpty) {
-          return cardWidget;
-        }
-
-        final cJuz = completedJuzMatches.first;
-        return Column(
-          children: [
-            cardWidget,
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                gradient: AppColors.goldGradient,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.gold.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.black, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    '۩ تم بحمد الله ختام الجزء ${ArabicNumbers.convert(cJuz.number)} (${cJuz.name}) ۩',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         );
       },
     );
@@ -671,7 +709,11 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(width: 40, height: 1, color: textColor.withValues(alpha: 0.2)),
+              Container(
+                width: 40,
+                height: 1,
+                color: textColor.withValues(alpha: 0.2),
+              ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12.0),
                 child: Text(
@@ -679,7 +721,11 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   style: TextStyle(color: AppColors.gold, fontSize: 14),
                 ),
               ),
-              Container(width: 40, height: 1, color: textColor.withValues(alpha: 0.2)),
+              Container(
+                width: 40,
+                height: 1,
+                color: textColor.withValues(alpha: 0.2),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -714,11 +760,13 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     final sheetBg = _readingMode == 1
         ? const Color(0xFFF7F1E1)
         : (_readingMode == 2
-            ? const Color(0xFF162520)
-            : (isDark ? AppColors.cardDark : Colors.white));
+              ? const Color(0xFF162520)
+              : (isDark ? AppColors.cardDark : Colors.white));
     final sheetTextColor = _readingMode == 1
         ? const Color(0xFF2C2117)
-        : (_readingMode == 2 ? const Color(0xFFE5EDE8) : (isDark ? Colors.white : Colors.black87));
+        : (_readingMode == 2
+              ? const Color(0xFFE5EDE8)
+              : (isDark ? Colors.white : Colors.black87));
 
     showModalBottomSheet(
       context: context,
@@ -777,10 +825,10 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                         color: _readingMode == 1
                             ? const Color(0xFFEFE7D3)
                             : (_readingMode == 2
-                                ? const Color(0xFF0F1B17)
-                                : (isDark
-                                    ? AppColors.cardDarkSecondary
-                                    : AppColors.backgroundLight)),
+                                  ? const Color(0xFF0F1B17)
+                                  : (isDark
+                                        ? AppColors.cardDarkSecondary
+                                        : AppColors.backgroundLight)),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: AppColors.gold.withValues(alpha: 0.25),
@@ -808,17 +856,21 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                         // 1. Bookmark Action
                         Expanded(
                           child: _buildActionButton(
-                            icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                            icon: isBookmarked
+                                ? Icons.bookmark
+                                : Icons.bookmark_border,
                             iconColor: AppColors.gold,
                             label: isBookmarked ? 'إزالة الفاصل' : 'حفظ فاصل',
                             textColor: sheetTextColor,
                             onTap: () {
-                              context.read<QuranBloc>().add(ToggleBookmarkEvent(
-                                    surahNumber: widget.surahNumber,
-                                    surahName: surah?.nameAr ?? '',
-                                    ayahNumber: ayah.numberInSurah,
-                                    ayahText: cleanText,
-                                  ));
+                              context.read<QuranBloc>().add(
+                                ToggleBookmarkEvent(
+                                  surahNumber: widget.surahNumber,
+                                  surahName: surah?.nameAr ?? '',
+                                  ayahNumber: ayah.numberInSurah,
+                                  ayahText: cleanText,
+                                ),
+                              );
                               Navigator.pop(bottomSheetContext);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -843,11 +895,13 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                             label: 'موضع القراءة',
                             textColor: sheetTextColor,
                             onTap: () {
-                              context.read<QuranBloc>().add(SaveLastReadEvent(
-                                    surahNumber: widget.surahNumber,
-                                    surahName: surah?.nameAr ?? '',
-                                    ayahNumber: ayah.numberInSurah,
-                                  ));
+                              context.read<QuranBloc>().add(
+                                SaveLastReadEvent(
+                                  surahNumber: widget.surahNumber,
+                                  surahName: surah?.nameAr ?? '',
+                                  ayahNumber: ayah.numberInSurah,
+                                ),
+                              );
                               Navigator.pop(bottomSheetContext);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -868,10 +922,12 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                             label: 'نسخ الآية',
                             textColor: sheetTextColor,
                             onTap: () {
-                              Clipboard.setData(ClipboardData(
-                                text:
-                                    '$cleanText ﴿${ArabicNumbers.convert(ayah.numberInSurah)}﴾ [سورة ${surah?.nameAr ?? ""}]',
-                              ));
+                              Clipboard.setData(
+                                ClipboardData(
+                                  text:
+                                      '$cleanText ﴿${ArabicNumbers.convert(ayah.numberInSurah)}﴾ [سورة ${surah?.nameAr ?? ""}]',
+                                ),
+                              );
                               Navigator.pop(bottomSheetContext);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -976,11 +1032,19 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                             setSheetState(() {
                               currentSize = val;
                             });
-                            context.read<QuranBloc>().add(ChangeFontSizeEvent(val));
+                            context.read<QuranBloc>().add(
+                              ChangeFontSizeEvent(val),
+                            );
                           },
                         ),
                       ),
-                      const Text('أ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'أ',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   Text(

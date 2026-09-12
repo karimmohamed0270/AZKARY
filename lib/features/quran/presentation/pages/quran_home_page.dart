@@ -17,7 +17,8 @@ class QuranHomePage extends StatefulWidget {
   State<QuranHomePage> createState() => _QuranHomePageState();
 }
 
-class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProviderStateMixin {
+class _QuranHomePageState extends State<QuranHomePage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -39,21 +40,23 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.holyQuran),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text(AppStrings.holyQuran), elevation: 0),
       body: BlocBuilder<QuranBloc, QuranState>(
         builder: (context, state) {
           if (state.status == QuranStatus.loading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
           }
 
           return Column(
             children: [
               // Search Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
                 child: TextField(
                   controller: _searchController,
                   onChanged: (val) {
@@ -61,29 +64,41 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                   },
                   decoration: InputDecoration(
                     hintText: AppStrings.searchSurah,
-                    prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.primary,
+                    ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear, size: 20),
                             onPressed: () {
                               _searchController.clear();
-                              context.read<QuranBloc>().add(const SearchQuranEvent(''));
+                              context.read<QuranBloc>().add(
+                                const SearchQuranEvent(''),
+                              );
                             },
                           )
                         : null,
                     filled: true,
                     fillColor: isDark ? AppColors.cardDark : Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+                        color: isDark
+                            ? AppColors.dividerDark
+                            : AppColors.dividerLight,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(
-                        color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+                        color: isDark
+                            ? AppColors.dividerDark
+                            : AppColors.dividerLight,
                       ),
                     ),
                   ),
@@ -91,9 +106,13 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
               ),
 
               // Last Read Quick Action Card
-              if (_searchController.text.isEmpty && state.lastReadSurahNumber > 0)
+              if (_searchController.text.isEmpty &&
+                  state.lastReadSurahNumber > 0)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 4.0,
+                  ),
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
@@ -131,7 +150,11 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                                   color: Colors.white.withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.menu_book, color: AppColors.goldLight, size: 28),
+                                child: const Icon(
+                                  Icons.menu_book,
+                                  color: AppColors.goldLight,
+                                  size: 28,
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -166,7 +189,10 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.gold,
                                   borderRadius: BorderRadius.circular(20),
@@ -192,9 +218,7 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
 
               // Search results or Tabs
               if (_searchController.text.isNotEmpty)
-                Expanded(
-                  child: _buildSearchResults(context, state),
-                )
+                Expanded(child: _buildSearchResults(context, state))
               else
                 Expanded(
                   child: Column(
@@ -202,13 +226,23 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                       TabBar(
                         controller: _tabController,
                         indicatorColor: AppColors.primary,
-                        labelColor: isDark ? AppColors.goldLight : AppColors.primary,
-                        unselectedLabelColor: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        labelColor: isDark
+                            ? AppColors.goldLight
+                            : AppColors.primary,
+                        unselectedLabelColor: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
                         indicatorWeight: 3,
                         tabs: [
-                          Tab(text: '${AppStrings.surahs} (${ArabicNumbers.convert(state.surahs.length)})'),
+                          Tab(
+                            text:
+                                '${AppStrings.surahs} (${ArabicNumbers.convert(state.surahs.length)})',
+                          ),
                           Tab(text: 'الأجزاء (${ArabicNumbers.convert(30)})'),
-                          Tab(text: '${AppStrings.bookmarks} (${ArabicNumbers.convert(state.bookmarks.length)})'),
+                          Tab(
+                            text:
+                                '${AppStrings.bookmarks} (${ArabicNumbers.convert(state.bookmarks.length)})',
+                          ),
                         ],
                       ),
                       Expanded(
@@ -244,7 +278,10 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
         final surah = surahs[index];
         return Card(
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 4,
+            ),
             leading: Container(
               width: 44,
               height: 44,
@@ -274,7 +311,10 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: surah.isMeccan
                         ? AppColors.gold.withOpacity(0.15)
@@ -286,7 +326,9 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: surah.isMeccan ? AppColors.goldDark : AppColors.primary,
+                      color: surah.isMeccan
+                          ? AppColors.goldDark
+                          : AppColors.primary,
                     ),
                   ),
                 ),
@@ -299,7 +341,11 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.primary),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: AppColors.primary,
+            ),
             onTap: () {
               Navigator.push(
                 context,
@@ -331,7 +377,9 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.15),
+              color: isDark
+                  ? Colors.grey.withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.15),
             ),
           ),
           child: InkWell(
@@ -384,7 +432,10 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.gold.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
@@ -392,7 +443,9 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                               child: Text(
                                 juz.name,
                                 style: TextStyle(
-                                  color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                                  color: isDark
+                                      ? AppColors.goldLight
+                                      : AppColors.goldDark,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -405,7 +458,9 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                           'من ${juz.startSurahName} (${ArabicNumbers.convert(juz.startAyah)}) إلى ${juz.endSurahName} (${ArabicNumbers.convert(juz.endAyah)})',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
                           ),
                         ),
                       ],
@@ -415,7 +470,10 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
@@ -430,7 +488,11 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                     ],
                   ),
                 ],
@@ -442,13 +504,20 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
     );
   }
 
-  Widget _buildBookmarksList(BuildContext context, List<Map<String, dynamic>> bookmarks) {
+  Widget _buildBookmarksList(
+    BuildContext context,
+    List<Map<String, dynamic>> bookmarks,
+  ) {
     if (bookmarks.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.bookmark_border, size: 64, color: Colors.grey.withOpacity(0.5)),
+            Icon(
+              Icons.bookmark_border,
+              size: 64,
+              color: Colors.grey.withOpacity(0.5),
+            ),
             const SizedBox(height: 12),
             const Text(
               'لا توجد إشارات مرجعية محفوظة',
@@ -482,17 +551,26 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
               children: [
                 Text(
                   'سورة $surahName (الآية ${ArabicNumbers.convert(ayahNum)})',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: AppColors.accentRed, size: 20),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.accentRed,
+                    size: 20,
+                  ),
                   onPressed: () {
-                    context.read<QuranBloc>().add(ToggleBookmarkEvent(
-                          surahNumber: surahNum,
-                          surahName: surahName,
-                          ayahNumber: ayahNum,
-                          ayahText: ayahText,
-                        ));
+                    context.read<QuranBloc>().add(
+                      ToggleBookmarkEvent(
+                        surahNumber: surahNum,
+                        surahName: surahName,
+                        ayahNumber: ayahNum,
+                        ayahText: ayahText,
+                      ),
+                    );
                   },
                 ),
               ],
@@ -534,55 +612,74 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
         if (surahs.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('السور المطابقة:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            child: Text(
+              'السور المطابقة:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ),
-          ...surahs.map((s) => Card(
-                child: ListTile(
-                  title: Text('سورة ${s.nameAr}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${s.versesCount} آية • ${s.isMeccan ? AppStrings.meccan : AppStrings.medinan}'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => SurahDetailPage(surahNumber: s.number)),
-                    );
-                  },
+          ...surahs.map(
+            (s) => Card(
+              child: ListTile(
+                title: Text(
+                  'سورة ${s.nameAr}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-              )),
+                subtitle: Text(
+                  '${s.versesCount} آية • ${s.isMeccan ? AppStrings.meccan : AppStrings.medinan}',
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SurahDetailPage(surahNumber: s.number),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
         ],
         if (ayahs.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text('الآيات المطابقة (${ArabicNumbers.convert(ayahs.length)}):',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            child: Text(
+              'الآيات المطابقة (${ArabicNumbers.convert(ayahs.length)}):',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ),
-          ...ayahs.map((a) => Card(
-                child: ListTile(
-                  title: Text(
-                    '${a['surah_name']} - الآية ${ArabicNumbers.convert(a['ayah_number'])}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+          ...ayahs.map(
+            (a) => Card(
+              child: ListTile(
+                title: Text(
+                  '${a['surah_name']} - الآية ${ArabicNumbers.convert(a['ayah_number'])}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      a['text'].toString(),
-                      style: const TextStyle(fontSize: 14, height: 1.5),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SurahDetailPage(
-                          surahNumber: a['surah_number'] as int,
-                          initialAyah: a['ayah_number'] as int,
-                        ),
-                      ),
-                    );
-                  },
                 ),
-              )),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    a['text'].toString(),
+                    style: const TextStyle(fontSize: 14, height: 1.5),
+                  ),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SurahDetailPage(
+                        surahNumber: a['surah_number'] as int,
+                        initialAyah: a['ayah_number'] as int,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ],
     );

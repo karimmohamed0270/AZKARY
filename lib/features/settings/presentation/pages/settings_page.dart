@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/widgets/update_dialog.dart';
+import '../../../../core/services/app_update_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/preference_service.dart';
 import '../../../prayer_times/bloc/prayer_times_bloc.dart';
 import '../../../prayer_times/bloc/prayer_times_event.dart';
@@ -22,6 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _adhanNotif = true;
   bool _azkarNotif = true;
   String _currentTheme = 'system';
+  bool _isCheckingUpdate = false;
 
   @override
   void initState() {
@@ -103,6 +108,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       activeColor: AppColors.primary,
                       onChanged: (val) async {
                         setState(() => _adhanNotif = val);
+                        if (val) {
+                          await getIt<NotificationService>().requestPermissions();
+                        }
                         await _prefService.setAdhanNotification(val);
                         if (mounted) {
                           context.read<PrayerTimesBloc>().add(LoadPrayerTimesEvent());
@@ -118,9 +126,42 @@ class _SettingsPageState extends State<SettingsPage> {
                       activeColor: AppColors.primary,
                       onChanged: (val) async {
                         setState(() => _azkarNotif = val);
+                        if (val) {
+                          await getIt<NotificationService>().requestPermissions();
+                        }
                         await _prefService.setAzkarNotification(val);
                         if (mounted) {
                           context.read<PrayerTimesBloc>().add(LoadPrayerTimesEvent());
+                        }
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.notifications_active_outlined, color: AppColors.primary),
+                      title: const Text('إرسال إشعار تجريبي الآن'),
+                      subtitle: const Text('اختبار ظهور التنبيهات والصوت على هاتفك فوراً'),
+                      trailing: const Icon(Icons.send_rounded, size: 18, color: AppColors.primary),
+                      onTap: () async {
+                        final notifService = getIt<NotificationService>();
+                        await notifService.showInstantNotification(
+                          title: '🕌 تطبيق أذكاري (إشعار تجريبي)',
+                          body: 'تم اختبار نظام الإشعارات والتنبيهات بنجاح، التطبيق جاهز لتنبيهك في أوقات الصلاة والأذكار.',
+                        );
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.white, size: 20),
+                                  SizedBox(width: 8),
+                                  Expanded(child: Text('تم إرسال إشعار تجريبي! تفقد شريط الإشعارات بالأعلى 🔔')),
+                                ],
+                              ),
+                              backgroundColor: AppColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
                         }
                       },
                     ),
@@ -148,14 +189,36 @@ class _SettingsPageState extends State<SettingsPage> {
 
               const SizedBox(height: 20),
 
-              // Section 4: About App
-              _buildSectionHeader('معلومات التطبيق'),
+              // Section 4: About App & Updates
+              _buildSectionHeader('معلومات وتحديث التطبيق'),
               Card(
-                child: ListTile(
-                  leading: const Icon(Icons.info, color: AppColors.primary),
-                  title: const Text(AppStrings.aboutApp),
-                  subtitle: const Text('تطبيق أذكاري - الإصدار 1.0.0 (Offline-First)'),
-                  onTap: () => _showAboutAppDialog(context),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.info_outline, color: AppColors.primary),
+                      title: const Text(AppStrings.aboutApp),
+                      subtitle: const Text('تطبيق أذكاري - الإصدار 1.0.0 (Offline-First)'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _showAboutAppDialog(context),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.system_update_rounded, color: AppColors.primary),
+                      title: const Text('التحقق من وجود تحديثات'),
+                      subtitle: const Text('فحص وتثبيت الإصدارات الجديدة عبر GitHub'),
+                      trailing: _isCheckingUpdate
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
+                            )
+                          : const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: _isCheckingUpdate ? null : _checkForUpdates,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -366,10 +429,18 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Row(
-          children: const [
-            Icon(Icons.mosque, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text(AppStrings.appName, style: TextStyle(fontWeight: FontWeight.bold)),
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 44,
+                height: 44,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(AppStrings.appName, style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
@@ -397,5 +468,54 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _checkForUpdates() async {
+    setState(() => _isCheckingUpdate = true);
+
+    try {
+      final updateService = getIt<AppUpdateService>();
+      final result = await updateService.checkForUpdates(manualCheck: true);
+
+      if (!mounted) return;
+      setState(() => _isCheckingUpdate = false);
+
+      if (result.hasUpdate && result.latestRelease != null) {
+        UpdateDialog.show(
+          context: context,
+          releaseInfo: result.latestRelease!,
+          currentVersion: result.currentVersion,
+          updateService: updateService,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.errorMessage ??
+                  'أنت تستخدم أحدث إصدار من التطبيق (v${result.currentVersion})',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: result.errorMessage != null
+                ? (result.errorMessage!.contains('أحدث إصدار')
+                    ? AppColors.primary
+                    : AppColors.accentRed)
+                : AppColors.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isCheckingUpdate = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ أثناء فحص التحديثات: $e'),
+          backgroundColor: AppColors.accentRed,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 }

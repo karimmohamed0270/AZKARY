@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/di/injection.dart';
+import '../../../../core/presentation/widgets/update_dialog.dart';
+import '../../../../core/services/app_update_service.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../azkar/presentation/pages/azkar_home_page.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../quran/presentation/pages/quran_home_page.dart';
@@ -18,6 +22,44 @@ class MainNavigationPage extends StatefulWidget {
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initPermissionsAndChecks();
+    });
+  }
+
+  Future<void> _initPermissionsAndChecks() async {
+    // 1. Prompt for notifications permission on Android 13+ / iOS
+    try {
+      await getIt<NotificationService>().requestPermissions();
+    } catch (_) {}
+
+    // 2. Check for updates in background after delay
+    await _checkUpdateSilently();
+  }
+
+  Future<void> _checkUpdateSilently() async {
+    // Check in background after 4 seconds to avoid slowing down startup
+    await Future.delayed(const Duration(seconds: 4));
+    if (!mounted) return;
+
+    try {
+      final updateService = getIt<AppUpdateService>();
+      final result = await updateService.checkForUpdates(manualCheck: false);
+
+      if (result.hasUpdate && result.latestRelease != null && mounted) {
+        UpdateDialog.show(
+          context: context,
+          releaseInfo: result.latestRelease!,
+          currentVersion: result.currentVersion,
+          updateService: updateService,
+        );
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {

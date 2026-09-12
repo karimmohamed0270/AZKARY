@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:azkari/core/services/preference_service.dart';
 import 'package:azkari/features/azkar/models/zikr_model.dart';
 import 'package:azkari/features/azkar/models/asmaa_allah_model.dart';
+import 'package:azkari/features/azkar/data/azkar_repository.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -302,6 +303,45 @@ void main() {
       expect(prefsService.getTasbeehStreak(), 0);
       await prefsService.incrementTodayTasbeeh();
       expect(prefsService.getTasbeehStreak(), 1);
+    });
+  });
+
+  group('Morning and Evening Azkar Content Verification Test', () {
+    test('Sabah and Masaa include Ayat Al-Kursi (1x) and 3 Surahs (3x each)', () async {
+      final repo = AzkarRepository();
+      final sabahAzkar = await repo.getAzkarByCategory('أذكار الصباح');
+      final masaaAzkar = await repo.getAzkarByCategory('أذكار المساء');
+
+      // Verify Morning Azkar
+      final sabahKursi = sabahAzkar.firstWhere((z) => z.text.contains('اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ'));
+      expect(sabahKursi.count, 1);
+
+      final sabahIkhlas = sabahAzkar.firstWhere((z) => z.text.contains('قُلْ هُوَ اللَّهُ أَحَدٌ'));
+      expect(sabahIkhlas.count, 3);
+
+      final sabahFalaq = sabahAzkar.firstWhere((z) => z.text.contains('قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ'));
+      expect(sabahFalaq.count, 3);
+
+      final sabahNas = sabahAzkar.firstWhere((z) => z.text.contains('قُلْ أَعُوذُ بِرَبِّ النَّاسِ'));
+      expect(sabahNas.count, 3);
+
+      // Verify Evening Azkar
+      final masaaKursi = masaaAzkar.firstWhere((z) => z.text.contains('اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ'));
+      expect(masaaKursi.count, 1);
+
+      final masaaIkhlas = masaaAzkar.firstWhere((z) => z.text.contains('قُلْ هُوَ اللَّهُ أَحَدٌ'));
+      expect(masaaIkhlas.count, 3);
+
+      final masaaFalaq = masaaAzkar.firstWhere((z) => z.text.contains('قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ'));
+      expect(masaaFalaq.count, 3);
+
+      final masaaNas = masaaAzkar.firstWhere((z) => z.text.contains('قُلْ أَعُوذُ بِرَبِّ النَّاسِ'));
+      expect(masaaNas.count, 3);
+
+      // Verify all Azkar IDs are unique
+      final allAzkar = await repo.getAllAzkar();
+      final ids = allAzkar.map((z) => z.id).toSet();
+      expect(ids.length, allAzkar.length);
     });
   });
 }

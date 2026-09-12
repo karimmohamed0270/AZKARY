@@ -129,16 +129,27 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
     FetchGpsLocationEvent event,
     Emitter<PrayerTimesState> emit,
   ) async {
-    final pos = await locationService.getCurrentGpsPosition();
-    if (pos != null) {
+    emit(state.copyWith(status: PrayerTimesStatus.loading));
+    final result = await locationService.getCurrentLocationDetailed();
+    if (result.isSuccess && result.position != null) {
+      final pos = result.position!;
+      final nearestName = result.nearestCity != null
+          ? 'موقعي الحالي (${result.nearestCity!.nameAr})'
+          : 'موقعي الحالي (GPS)';
+
       await preferenceService.setLocation(
-        cityNameAr: 'موقعي الحالي (GPS)',
-        cityNameEn: 'Current Location',
+        cityNameAr: nearestName,
+        cityNameEn: result.nearestCity?.nameEn ?? 'Current Location',
         latitude: pos.latitude,
         longitude: pos.longitude,
         isGps: true,
       );
       add(LoadPrayerTimesEvent());
+    } else {
+      emit(state.copyWith(
+        status: PrayerTimesStatus.loaded,
+        errorMessage: result.errorMessage,
+      ));
     }
   }
 

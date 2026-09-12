@@ -89,7 +89,7 @@ class _ZikrReadingPageState extends State<ZikrReadingPage> {
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
                     value: (azkarList.isNotEmpty) ? (_currentPage + 1) / azkarList.length : 0,
-                    backgroundColor: Colors.grey.withOpacity(0.2),
+                    backgroundColor: Colors.grey.withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                     minHeight: 6,
                   ),
@@ -151,7 +151,7 @@ class _ZikrReadingPageState extends State<ZikrReadingPage> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withOpacity(0.12),
+                                          color: AppColors.primary.withValues(alpha: 0.12),
                                           borderRadius: BorderRadius.circular(10),
                                         ),
                                         child: Text(
@@ -206,7 +206,7 @@ class _ZikrReadingPageState extends State<ZikrReadingPage> {
                                           boxShadow: [
                                             BoxShadow(
                                               color: (isDone ? AppColors.goldDark : AppColors.primaryDark)
-                                                  .withOpacity(0.4),
+                                                  .withValues(alpha: 0.4),
                                               blurRadius: 12,
                                               offset: const Offset(0, 4),
                                             ),
@@ -286,8 +286,8 @@ class _ZikrReadingPageState extends State<ZikrReadingPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.stars, color: AppColors.gold),
             SizedBox(width: 8),
             Text(AppStrings.fadl, style: TextStyle(fontWeight: FontWeight.bold)),

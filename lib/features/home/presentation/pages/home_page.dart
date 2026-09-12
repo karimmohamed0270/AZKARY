@@ -35,13 +35,14 @@ class HomePage extends StatelessWidget {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 34,
+                height: 34,
+                fit: BoxFit.contain,
               ),
-              child: const Icon(Icons.mosque, color: AppColors.goldLight, size: 20),
             ),
             const SizedBox(width: 10),
             const Text(

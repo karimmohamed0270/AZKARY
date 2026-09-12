@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/audio_service.dart';
+import '../services/app_update_service.dart';
 import '../services/location_service.dart';
 import '../services/notification_service.dart';
 import '../services/preference_service.dart';
@@ -23,6 +24,7 @@ Future<void> initDependencies() async {
   getIt.registerLazySingleton<LocationService>(() => LocationService());
   getIt.registerLazySingleton<NotificationService>(() => NotificationService());
   getIt.registerLazySingleton<AudioService>(() => AudioService());
+  getIt.registerLazySingleton<AppUpdateService>(() => AppUpdateService());
 
   // 3. Repositories
   getIt.registerLazySingleton<QuranRepository>(() => QuranRepository());

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection.dart';
@@ -7,6 +8,8 @@ import '../../../../core/services/app_update_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../azkar/presentation/pages/azkar_home_page.dart';
 import '../../../home/presentation/pages/home_page.dart';
+import '../../../prayer_times/bloc/prayer_times_bloc.dart';
+import '../../../prayer_times/bloc/prayer_times_event.dart';
 import '../../../quran/presentation/pages/quran_home_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../tasbeeh/presentation/pages/tasbeeh_page.dart';
@@ -34,7 +37,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   Future<void> _initPermissionsAndChecks() async {
     // 1. Prompt for notifications permission on Android 13+ / iOS
     try {
-      await getIt<NotificationService>().requestPermissions();
+      final granted = await getIt<NotificationService>().requestPermissions();
+      if (granted && mounted) {
+        context.read<PrayerTimesBloc>().add(LoadPrayerTimesEvent());
+      }
     } catch (_) {}
 
     // 2. Check for updates in background after delay

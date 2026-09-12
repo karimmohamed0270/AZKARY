@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -5,6 +7,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/presentation/widgets/update_dialog.dart';
 import '../../../../core/services/app_update_service.dart';
+import '../../../../core/services/audio_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/preference_service.dart';
 import '../../../prayer_times/bloc/prayer_times_bloc.dart';
@@ -27,6 +30,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _azkarNotif = true;
   String _currentTheme = 'system';
   bool _isCheckingUpdate = false;
+  bool _isPlayingAdhan = false;
+  StreamSubscription<PlayerState>? _audioSubscription;
 
   @override
   void initState() {
@@ -35,6 +40,22 @@ class _SettingsPageState extends State<SettingsPage> {
     _adhanNotif = _prefService.isAdhanNotificationEnabled();
     _azkarNotif = _prefService.isAzkarNotificationEnabled();
     _currentTheme = _prefService.getThemeMode();
+
+    _audioSubscription =
+        getIt<AudioService>().onPlayerStateChanged.listen((pState) {
+      if (mounted) {
+        setState(() {
+          _isPlayingAdhan = pState == PlayerState.playing;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioSubscription?.cancel();
+    getIt<AudioService>().stopAudio();
+    super.dispose();
   }
 
   @override
@@ -103,9 +124,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     SwitchListTile(
                       secondary: const Icon(Icons.notifications_active, color: AppColors.primary),
                       title: const Text(AppStrings.adhanNotification),
-                      subtitle: const Text('تنبيه الأذان عند حلول وقت كل صلاة'),
+                      subtitle: const Text('تنبيه الأذان بصوت الأذان والتكبيرات عند كل صلاة'),
                       value: _adhanNotif,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (val) async {
                         setState(() => _adhanNotif = val);
                         if (val) {
@@ -121,9 +142,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     SwitchListTile(
                       secondary: const Icon(Icons.alarm, color: AppColors.primary),
                       title: const Text('تنبيه الأذكار اليومية'),
-                      subtitle: const Text('تذكير يومي بأذكار الصباح والمساء'),
+                      subtitle: const Text('تذكير يومي بأذكار الصباح (6:30 ص) والمساء (5:00 م)'),
                       value: _azkarNotif,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (val) async {
                         setState(() => _azkarNotif = val);
                         if (val) {
@@ -137,15 +158,38 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     const Divider(height: 1),
                     ListTile(
+                      leading: Icon(
+                        _isPlayingAdhan ? Icons.stop_circle : Icons.volume_up_rounded,
+                        color: AppColors.primary,
+                        size: 26,
+                      ),
+                      title: Text(_isPlayingAdhan ? 'إيقاف صوت الأذان' : 'الاستماع لصوت الأذان (معاينة)'),
+                      subtitle: const Text('تجربة صوت الأذان المعتمد لمواقيت الصلاة'),
+                      trailing: Icon(
+                        _isPlayingAdhan ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                        color: AppColors.primary,
+                        size: 26,
+                      ),
+                      onTap: () async {
+                        final audioService = getIt<AudioService>();
+                        if (_isPlayingAdhan) {
+                          await audioService.stopAudio();
+                        } else {
+                          await audioService.playAdhan();
+                        }
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
                       leading: const Icon(Icons.notifications_active_outlined, color: AppColors.primary),
-                      title: const Text('إرسال إشعار تجريبي الآن'),
-                      subtitle: const Text('اختبار ظهور التنبيهات والصوت على هاتفك فوراً'),
+                      title: const Text('إرسال إشعار تجريبي بالصوت الآن'),
+                      subtitle: const Text('اختبار ظهور إشعار الأذان وتشغيل الصوت على هاتفك فوراً'),
                       trailing: const Icon(Icons.send_rounded, size: 18, color: AppColors.primary),
                       onTap: () async {
                         final notifService = getIt<NotificationService>();
                         await notifService.showInstantNotification(
-                          title: '🕌 تطبيق أذكاري (إشعار تجريبي)',
-                          body: 'تم اختبار نظام الإشعارات والتنبيهات بنجاح، التطبيق جاهز لتنبيهك في أوقات الصلاة والأذكار.',
+                          title: '🕌 حان الآن موعد الأذان (إشعار تجريبي)',
+                          body: 'حي على الصلاة، حي على الفلاح.. تم اختبار الصوت والتنبيه بنجاح.',
                         );
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -154,7 +198,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 children: [
                                   Icon(Icons.check_circle, color: Colors.white, size: 20),
                                   SizedBox(width: 8),
-                                  Expanded(child: Text('تم إرسال إشعار تجريبي! تفقد شريط الإشعارات بالأعلى 🔔')),
+                                  Expanded(child: Text('تم إرسال إشعار تجريبي بصوت الأذان! تفقد شريط الإشعارات 🔔')),
                                 ],
                               ),
                               backgroundColor: AppColors.primary,

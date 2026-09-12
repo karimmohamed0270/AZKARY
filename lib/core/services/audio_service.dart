@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 class AudioService {
   final AudioPlayer _audioPlayer = AudioPlayer();
 
+  Stream<PlayerState> get onPlayerStateChanged => _audioPlayer.onPlayerStateChanged;
+  bool get isPlaying => _audioPlayer.state == PlayerState.playing;
+
   /// Trigger haptic feedback (light click)
   Future<void> clickFeedback() async {
     await HapticFeedback.lightImpact();
@@ -22,6 +25,11 @@ class AudioService {
       await _audioPlayer.stop();
       await _audioPlayer.play(AssetSource(assetPath));
     } catch (_) {}
+  }
+
+  /// Play Adhan preview
+  Future<void> playAdhan() async {
+    await playAsset('audio/adhan.mp3');
   }
 
   /// Stop any audio playing

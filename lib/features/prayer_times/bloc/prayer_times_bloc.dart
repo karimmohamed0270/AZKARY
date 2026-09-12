@@ -74,7 +74,7 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
       ));
 
       // Schedule offline notifications for the prayers
-      _scheduleUpcomingNotifications(lat, lng, cityName, method, madhab);
+      await _scheduleUpcomingNotifications(lat, lng, cityName, method, madhab);
     } catch (e) {
       emit(state.copyWith(
         status: PrayerTimesStatus.error,
@@ -178,49 +178,50 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
     String method,
     String madhab,
   ) async {
-    if (!preferenceService.isAdhanNotificationEnabled()) return;
-
     try {
+      // Clear previous scheduled alarms before setting updated ones
       await notificationService.cancelAllNotifications();
 
-      // Schedule next 7 days of prayers
-      int notifId = 1;
-      final now = DateTime.now();
-      for (int i = 0; i < 7; i++) {
-        final targetDate = now.add(Duration(days: i));
-        final dayPrayers = PrayerCalculator.calculate(
-          latitude: lat,
-          longitude: lng,
-          cityName: cityName,
-          isGps: false,
-          method: method,
-          madhab: madhab,
-          targetDate: targetDate,
-        );
+      // 1. Schedule Prayers if enabled
+      if (preferenceService.isAdhanNotificationEnabled()) {
+        final now = DateTime.now();
+        int notifId = 100;
+        for (int i = 0; i < 7; i++) {
+          final targetDate = now.add(Duration(days: i));
+          final dayPrayers = PrayerCalculator.calculate(
+            latitude: lat,
+            longitude: lng,
+            cityName: cityName,
+            isGps: false,
+            method: method,
+            madhab: madhab,
+            targetDate: targetDate,
+          );
 
-        final prayers = [
-          {'name': 'الفجر', 'time': dayPrayers.fajr},
-          {'name': 'الظهر', 'time': dayPrayers.dhuhr},
-          {'name': 'العصر', 'time': dayPrayers.asr},
-          {'name': 'المغرب', 'time': dayPrayers.maghrib},
-          {'name': 'العشاء', 'time': dayPrayers.isha},
-        ];
+          final prayers = [
+            {'name': 'الفجر', 'time': dayPrayers.fajr},
+            {'name': 'الظهر', 'time': dayPrayers.dhuhr},
+            {'name': 'العصر', 'time': dayPrayers.asr},
+            {'name': 'المغرب', 'time': dayPrayers.maghrib},
+            {'name': 'العشاء', 'time': dayPrayers.isha},
+          ];
 
-        for (final p in prayers) {
-          final pTime = p['time'] as DateTime;
-          final pName = p['name'] as String;
-          if (pTime.isAfter(DateTime.now())) {
-            await notificationService.schedulePrayerNotification(
-              id: notifId++,
-              title: 'حان الآن موعد أذان $pName',
-              body: 'حي على الصلاة، حي على الفلاح ($cityName)',
-              scheduledTime: pTime,
-            );
+          for (final p in prayers) {
+            final pTime = p['time'] as DateTime;
+            final pName = p['name'] as String;
+            if (pTime.isAfter(now)) {
+              await notificationService.schedulePrayerNotification(
+                id: notifId++,
+                title: 'حان الآن موعد أذان $pName 🕌',
+                body: 'حي على الصلاة، حي على الفلاح ($cityName)',
+                scheduledTime: pTime,
+              );
+            }
           }
         }
       }
 
-      // Schedule Morning (6:30 AM) & Evening (5:00 PM) Azkar
+      // 2. Schedule Azkar independently if enabled
       if (preferenceService.isAzkarNotificationEnabled()) {
         await notificationService.scheduleDailyAzkarNotification(
           id: 9001,

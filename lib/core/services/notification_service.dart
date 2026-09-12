@@ -9,18 +9,20 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
 
+  static const String prayerChannelId = 'prayer_adhan_channel_v3';
+  static const String prayerChannelName = 'مواقيت الصلاة والأذان';
+  static const String prayerChannelDesc =
+      'تنبيهات صوت الأذان ومواقيت الصلاة المفروضة';
+
+  static const String azkarChannelId = 'azkar_reminder_channel_v2';
+  static const String azkarChannelName = 'تذكير الأذكار اليومية';
+  static const String azkarChannelDesc = 'تنبيهات أذكار الصباح والمساء';
+
   Future<void> init() async {
     if (_isInitialized) return;
 
     // 1. Initialize Timezone database and configure device local timezone
-    tz.initializeTimeZones();
-    try {
-      final tzInfo = await FlutterTimezone.getLocalTimezone();
-      final String timeZoneName = tzInfo.identifier;
-      tz.setLocalLocation(tz.getLocation(timeZoneName));
-    } catch (e) {
-      debugPrint('Could not set local timezone automatically: $e');
-    }
+    await _configureLocalTimezone();
 
     // 2. Settings for Android & iOS
     const AndroidInitializationSettings androidSettings =
@@ -45,25 +47,36 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidImpl != null) {
+      // Remove deprecated / outdated channels so new audio config takes effect
+      try {
+        await androidImpl.deleteNotificationChannel('prayer_adhan_channel');
+        await androidImpl.deleteNotificationChannel('azkar_reminder_channel');
+      } catch (_) {}
+
+      // High priority Prayer channel with Adhan audio
       await androidImpl.createNotificationChannel(
         const AndroidNotificationChannel(
-          'prayer_adhan_channel',
-          'مواقيت الصلاة والأذان',
-          description: 'تنبيهات مواقيت الصلاة المفروضة',
+          prayerChannelId,
+          prayerChannelName,
+          description: prayerChannelDesc,
           importance: Importance.max,
           playSound: true,
+          sound: RawResourceAndroidNotificationSound('adhan'),
+          audioAttributesUsage: AudioAttributesUsage.alarm,
           enableVibration: true,
           showBadge: true,
         ),
       );
 
+      // Daily Azkar reminder channel with gentle chime audio
       await androidImpl.createNotificationChannel(
         const AndroidNotificationChannel(
-          'azkar_reminder_channel',
-          'تذكير الأذكار اليومية',
-          description: 'تنبيهات أذكار الصباح والمساء',
+          azkarChannelId,
+          azkarChannelName,
+          description: azkarChannelDesc,
           importance: Importance.high,
           playSound: true,
+          sound: RawResourceAndroidNotificationSound('azkar_tone'),
           enableVibration: true,
           showBadge: true,
         ),
@@ -71,6 +84,47 @@ class NotificationService {
     }
 
     _isInitialized = true;
+  }
+
+  /// Configure local timezone with robust fallbacks
+  Future<void> _configureLocalTimezone() async {
+    tz.initializeTimeZones();
+    try {
+      final tzInfo = await FlutterTimezone.getLocalTimezone();
+      final String timeZoneName = tzInfo.identifier;
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      return;
+    } catch (e) {
+      debugPrint('Could not set timezone automatically by identifier: $e');
+    }
+
+    // Fallback: match by current device UTC offset
+    try {
+      final offset = DateTime.now().timeZoneOffset;
+      final fallbackTz = _getFallbackTimezoneForOffset(offset);
+      tz.setLocalLocation(tz.getLocation(fallbackTz));
+    } catch (e) {
+      debugPrint('Fallback timezone offset failed: $e');
+      try {
+        tz.setLocalLocation(tz.getLocation('Africa/Cairo'));
+      } catch (_) {}
+    }
+  }
+
+  String _getFallbackTimezoneForOffset(Duration offset) {
+    final hours = offset.inHours;
+    switch (hours) {
+      case 2:
+        return 'Africa/Cairo';
+      case 3:
+        return 'Asia/Riyadh';
+      case 4:
+        return 'Asia/Dubai';
+      case 1:
+        return 'Africa/Algiers';
+      default:
+        return 'UTC';
+    }
   }
 
   /// Request notification permissions (Android 13+ & iOS & Exact Alarms)
@@ -108,6 +162,19 @@ class NotificationService {
     return true;
   }
 
+  /// Request exact alarm permission if required on Android 12+
+  Future<bool?> requestExactAlarmsPermission() async {
+    final androidImpl = _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl != null) {
+      try {
+        return await androidImpl.requestExactAlarmsPermission();
+      } catch (_) {}
+    }
+    return true;
+  }
+
   /// Schedule local notification for a specific prayer
   Future<void> schedulePrayerNotification({
     required int id,
@@ -122,19 +189,26 @@ class NotificationService {
     final tz.TZDateTime tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'prayer_adhan_channel',
-      'مواقيت الصلاة والأذان',
-      channelDescription: 'تنبيهات مواقيت الصلاة المفروضة',
+      prayerChannelId,
+      prayerChannelName,
+      channelDescription: prayerChannelDesc,
       importance: Importance.max,
-      priority: Priority.high,
+      priority: Priority.max,
       playSound: true,
+      sound: RawResourceAndroidNotificationSound('adhan'),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
       enableVibration: true,
       fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
     );
 
     const NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(presentSound: true),
+      iOS: DarwinNotificationDetails(
+        presentSound: true,
+        sound: 'adhan.mp3',
+      ),
     );
 
     try {
@@ -186,18 +260,24 @@ class NotificationService {
     final tz.TZDateTime tzTime = tz.TZDateTime.from(scheduledDate, tz.local);
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'azkar_reminder_channel',
-      'تذكير الأذكار اليومية',
-      channelDescription: 'تنبيهات أذكار الصباح والمساء',
+      azkarChannelId,
+      azkarChannelName,
+      channelDescription: azkarChannelDesc,
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
+      sound: RawResourceAndroidNotificationSound('azkar_tone'),
       enableVibration: true,
+      category: AndroidNotificationCategory.reminder,
+      visibility: NotificationVisibility.public,
     );
 
     const NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(presentSound: true),
+      iOS: DarwinNotificationDetails(
+        presentSound: true,
+        sound: 'azkar_tone.mp3',
+      ),
     );
 
     try {
@@ -207,17 +287,31 @@ class NotificationService {
         body,
         tzTime,
         notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
     } catch (e) {
-      debugPrint('Failed to schedule azkar notification: $e');
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id,
+          title,
+          body,
+          tzTime,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      } catch (err) {
+        debugPrint('Failed to schedule azkar notification: $err');
+      }
     }
   }
 
-  /// Send an immediate test notification right now
+  /// Send an immediate test notification with real Adhan sound
   Future<void> showInstantNotification({
     required String title,
     required String body,
@@ -226,18 +320,25 @@ class NotificationService {
     await requestPermissions();
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'prayer_adhan_channel',
-      'مواقيت الصلاة والأذان',
-      channelDescription: 'تنبيهات مواقيت الصلاة المفروضة',
+      prayerChannelId,
+      prayerChannelName,
+      channelDescription: prayerChannelDesc,
       importance: Importance.max,
-      priority: Priority.high,
+      priority: Priority.max,
       playSound: true,
+      sound: RawResourceAndroidNotificationSound('adhan'),
+      audioAttributesUsage: AudioAttributesUsage.alarm,
       enableVibration: true,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
     );
 
     const NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(presentSound: true),
+      iOS: DarwinNotificationDetails(
+        presentSound: true,
+        sound: 'adhan.mp3',
+      ),
     );
 
     await _notificationsPlugin.show(
@@ -251,5 +352,10 @@ class NotificationService {
   /// Cancel all scheduled notifications
   Future<void> cancelAllNotifications() async {
     await _notificationsPlugin.cancelAll();
+  }
+
+  /// Cancel a specific notification
+  Future<void> cancelNotification(int id) async {
+    await _notificationsPlugin.cancel(id);
   }
 }

@@ -15,7 +15,6 @@ import '../../../prayer_times/bloc/prayer_times_state.dart';
 import '../../../prayer_times/presentation/pages/prayer_schedule_page.dart';
 import '../../../prayer_times/presentation/widgets/next_prayer_card.dart';
 import '../../../prayer_times/presentation/widgets/prayer_row_item.dart';
-import '../../../qibla/presentation/pages/qibla_page.dart';
 import '../../../quran/presentation/pages/surah_detail_page.dart';
 import '../../../quran/bloc/quran_bloc.dart';
 import '../../../quran/bloc/quran_state.dart';
@@ -52,16 +51,6 @@ class HomePage extends StatelessWidget {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.explore_outlined, color: AppColors.primary),
-            tooltip: AppStrings.qiblaCompass,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const QiblaPage()),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.calendar_month_outlined, color: AppColors.primary),
             tooltip: AppStrings.hijriCalendar,
@@ -254,14 +243,14 @@ class HomePage extends StatelessWidget {
                 ),
                 _buildQuickCard(
                   context,
-                  title: 'بوصلة القبلة',
-                  subtitle: 'توجيه دقيق للكعبة',
-                  icon: Icons.explore,
+                  title: 'التقويم الهجري',
+                  subtitle: 'المناسبات والأيام المباركة',
+                  icon: Icons.calendar_month,
                   gradient: AppColors.primaryGradient,
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const QiblaPage()),
+                      MaterialPageRoute(builder: (_) => const CalendarPage()),
                     );
                   },
                 ),

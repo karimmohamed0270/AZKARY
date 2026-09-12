@@ -186,26 +186,59 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: const Text('اختبار ظهور إشعار الأذان وتشغيل الصوت على هاتفك فوراً'),
                       trailing: const Icon(Icons.send_rounded, size: 18, color: AppColors.primary),
                       onTap: () async {
-                        final notifService = getIt<NotificationService>();
-                        await notifService.showInstantNotification(
-                          title: '🕌 حان الآن موعد الأذان (إشعار تجريبي)',
-                          body: 'حي على الصلاة، حي على الفلاح.. تم اختبار الصوت والتنبيه بنجاح.',
-                        );
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Expanded(child: Text('تم إرسال إشعار تجريبي بصوت الأذان! تفقد شريط الإشعارات 🔔')),
-                                ],
+                        try {
+                          final notifService = getIt<NotificationService>();
+                          
+                          final hasPerm = await notifService.requestPermissions();
+                          if (!hasPerm && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Row(
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Expanded(child: Text('يرجى التأكد من تفعيل إذن الإشعارات من إعدادات الهاتف')),
+                                  ],
+                                ),
+                                backgroundColor: Colors.orange.shade800,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
-                              backgroundColor: AppColors.primary,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
+                            );
+                          }
+
+                          await notifService.showInstantNotification(
+                            title: '🕌 حان الآن موعد الأذان (إشعار تجريبي)',
+                            body: 'حي على الصلاة، حي على الفلاح.. تم اختبار الصوت والتنبيه بنجاح.',
                           );
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Row(
+                                  children: [
+                                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Expanded(child: Text('تم إرسال إشعار تجريبي بصوت الأذان! تفقد شريط الإشعارات 🔔')),
+                                  ],
+                                ),
+                                backgroundColor: AppColors.primary,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('حدث خطأ أثناء الإشعار: $e'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            );
+                          }
                         }
                       },
                     ),

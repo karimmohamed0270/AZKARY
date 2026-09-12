@@ -24,9 +24,9 @@ class NotificationService {
     // 1. Initialize Timezone database and configure device local timezone
     await _configureLocalTimezone();
 
-    // 2. Settings for Android & iOS
+    // 2. Settings for Android & iOS (using 'ic_launcher' drawable resource name)
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('ic_launcher');
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -39,7 +39,11 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _notificationsPlugin.initialize(initSettings);
+    try {
+      await _notificationsPlugin.initialize(initSettings);
+    } catch (e) {
+      debugPrint('NotificationPlugin init error: $e');
+    }
 
     // 3. Create Android Notification Channels (Required on Android 8.0+)
     final androidImpl = _notificationsPlugin
@@ -54,33 +58,41 @@ class NotificationService {
       } catch (_) {}
 
       // High priority Prayer channel with Adhan audio
-      await androidImpl.createNotificationChannel(
-        const AndroidNotificationChannel(
-          prayerChannelId,
-          prayerChannelName,
-          description: prayerChannelDesc,
-          importance: Importance.max,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound('adhan'),
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-          enableVibration: true,
-          showBadge: true,
-        ),
-      );
+      try {
+        await androidImpl.createNotificationChannel(
+          const AndroidNotificationChannel(
+            prayerChannelId,
+            prayerChannelName,
+            description: prayerChannelDesc,
+            importance: Importance.max,
+            playSound: true,
+            sound: RawResourceAndroidNotificationSound('adhan'),
+            audioAttributesUsage: AudioAttributesUsage.alarm,
+            enableVibration: true,
+            showBadge: true,
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error creating prayer notification channel: $e');
+      }
 
       // Daily Azkar reminder channel with gentle chime audio
-      await androidImpl.createNotificationChannel(
-        const AndroidNotificationChannel(
-          azkarChannelId,
-          azkarChannelName,
-          description: azkarChannelDesc,
-          importance: Importance.high,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound('azkar_tone'),
-          enableVibration: true,
-          showBadge: true,
-        ),
-      );
+      try {
+        await androidImpl.createNotificationChannel(
+          const AndroidNotificationChannel(
+            azkarChannelId,
+            azkarChannelName,
+            description: azkarChannelDesc,
+            importance: Importance.high,
+            playSound: true,
+            sound: RawResourceAndroidNotificationSound('azkar_tone'),
+            enableVibration: true,
+            showBadge: true,
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error creating azkar notification channel: $e');
+      }
     }
 
     _isInitialized = true;
@@ -127,7 +139,7 @@ class NotificationService {
     }
   }
 
-  /// Request notification permissions (Android 13+ & iOS & Exact Alarms)
+  /// Request notification permissions (Android 13+ & iOS)
   Future<bool> requestPermissions() async {
     if (!_isInitialized) await init();
 
@@ -136,28 +148,30 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidImpl != null) {
-      // Android 13+ runtime POST_NOTIFICATIONS permission
-      final notifGranted =
-          await androidImpl.requestNotificationsPermission() ?? false;
-
-      // Android 12+ Exact alarm permission
       try {
-        await androidImpl.requestExactAlarmsPermission();
-      } catch (_) {}
-
-      return notifGranted;
+        final notifGranted =
+            await androidImpl.requestNotificationsPermission() ?? false;
+        return notifGranted;
+      } catch (e) {
+        debugPrint('requestNotificationsPermission error: $e');
+        return false;
+      }
     }
 
     final iosImpl = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
     if (iosImpl != null) {
-      final granted = await iosImpl.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-      return granted ?? false;
+      try {
+        final granted = await iosImpl.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        return granted ?? false;
+      } catch (_) {
+        return false;
+      }
     }
     return true;
   }
@@ -196,9 +210,8 @@ class NotificationService {
       priority: Priority.max,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('adhan'),
-      audioAttributesUsage: AudioAttributesUsage.alarm,
+      icon: 'ic_launcher',
       enableVibration: true,
-      fullScreenIntent: true,
       category: AndroidNotificationCategory.alarm,
       visibility: NotificationVisibility.public,
     );
@@ -223,7 +236,7 @@ class NotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
       );
     } catch (e) {
-      // If exact alarms are restricted by system, fallback to inexact
+      // Fallback if exact alarms are restricted by system
       try {
         await _notificationsPlugin.zonedSchedule(
           id,
@@ -267,6 +280,7 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('azkar_tone'),
+      icon: 'ic_launcher',
       enableVibration: true,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
@@ -317,7 +331,6 @@ class NotificationService {
     required String body,
   }) async {
     if (!_isInitialized) await init();
-    await requestPermissions();
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       prayerChannelId,
@@ -327,7 +340,7 @@ class NotificationService {
       priority: Priority.max,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('adhan'),
-      audioAttributesUsage: AudioAttributesUsage.alarm,
+      icon: 'ic_launcher',
       enableVibration: true,
       category: AndroidNotificationCategory.alarm,
       visibility: NotificationVisibility.public,
@@ -341,12 +354,31 @@ class NotificationService {
       ),
     );
 
-    await _notificationsPlugin.show(
-      888,
-      title,
-      body,
-      notificationDetails,
-    );
+    try {
+      await _notificationsPlugin.show(
+        888,
+        title,
+        body,
+        notificationDetails,
+      );
+    } catch (e) {
+      debugPrint('Primary instant notification failed ($e), attempting fallback without custom sound...');
+      // Fallback: show with standard notification sound
+      const AndroidNotificationDetails fallbackDetails = AndroidNotificationDetails(
+        'prayer_test_channel_fallback',
+        'تنبيهات الصلاة (احتياطي)',
+        importance: Importance.max,
+        priority: Priority.max,
+        playSound: true,
+        icon: 'ic_launcher',
+      );
+      await _notificationsPlugin.show(
+        889,
+        title,
+        body,
+        const NotificationDetails(android: fallbackDetails),
+      );
+    }
   }
 
   /// Cancel all scheduled notifications

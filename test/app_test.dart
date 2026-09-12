@@ -148,4 +148,49 @@ void main() {
       expect(fromJson.name, 'الله');
     });
   });
+
+  group('Quran Ayah Text Processing & Bismillah Handling Test', () {
+    String cleanAyah(int surahNum, int ayahNum, String rawText) {
+      String text = rawText.replaceAll('\ufeff', '').trim();
+      if (surahNum != 1 && surahNum != 9 && ayahNum == 1) {
+        const prefixes = [
+          'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+          'بِّسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+          'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+        ];
+        for (final prefix in prefixes) {
+          if (text.startsWith(prefix)) {
+            text = text.substring(prefix.length).trim();
+            break;
+          }
+        }
+      }
+      return text;
+    }
+
+    test('Preserves Bismillah in Surah Al-Fatiha Ayah 1', () {
+      const fatihaAyah1 = '﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
+      final cleaned = cleanAyah(1, 1, fatihaAyah1);
+      expect(cleaned, 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ');
+    });
+
+    test('Strips Bismillah prefix from Surah Al-Baqarah Ayah 1 without losing verse content', () {
+      const baqarahAyah1 = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ الٓمٓ';
+      final cleaned = cleanAyah(2, 1, baqarahAyah1);
+      expect(cleaned, 'الٓمٓ');
+    });
+
+    test('Does not modify verses other than Ayah 1', () {
+      const baqarahAyah2 = 'ذَٰلِكَ ٱلْكِتَٰبُ لَا رَيْبَ ۛ فِيهِ ۛ هُدًۭى لِّلْمُتَّقِينَ';
+      final cleaned = cleanAyah(2, 2, baqarahAyah2);
+      expect(cleaned, baqarahAyah2);
+    });
+
+    test('Leaves Surah At-Tawbah Ayah 1 untouched', () {
+      const tawbahAyah1 = 'بَرَاءَةٌ مِّنَ اللَّهِ وَرَسُولِهِ';
+      final cleaned = cleanAyah(9, 1, tawbahAyah1);
+      expect(cleaned, tawbahAyah1);
+    });
+  });
 }
+

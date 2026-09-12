@@ -119,7 +119,7 @@ class _QuranHomePageState extends State<QuranHomePage>
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryDark.withOpacity(0.3),
+                          color: AppColors.primaryDark.withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -147,7 +147,7 @@ class _QuranHomePageState extends State<QuranHomePage>
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.15),
+                                  color: Colors.white.withValues(alpha: 0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -181,7 +181,7 @@ class _QuranHomePageState extends State<QuranHomePage>
                                     Text(
                                       'الآية ${ArabicNumbers.convert(state.lastReadAyahNumber)}',
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(0.85),
+                                        color: Colors.white.withValues(alpha: 0.85),
                                         fontSize: 13,
                                       ),
                                     ),
@@ -286,9 +286,9 @@ class _QuranHomePageState extends State<QuranHomePage>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer.withOpacity(0.5),
+                color: AppColors.primaryContainer.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -317,8 +317,8 @@ class _QuranHomePageState extends State<QuranHomePage>
                   ),
                   decoration: BoxDecoration(
                     color: surah.isMeccan
-                        ? AppColors.gold.withOpacity(0.15)
-                        : AppColors.primary.withOpacity(0.15),
+                        ? AppColors.gold.withValues(alpha: 0.15)
+                        : AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -516,7 +516,7 @@ class _QuranHomePageState extends State<QuranHomePage>
             Icon(
               Icons.bookmark_border,
               size: 64,
-              color: Colors.grey.withOpacity(0.5),
+              color: Colors.grey.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 12),
             const Text(

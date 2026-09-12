@@ -104,15 +104,26 @@ class QuranRepository {
     return results;
   }
 
+  Future<void>? _loadingQuranTextFuture;
+
   Future<void> _ensureQuranTextLoaded() async {
     if (_cachedSurahAyahs != null) return;
+    if (_loadingQuranTextFuture != null) {
+      await _loadingQuranTextFuture;
+      return;
+    }
 
-    _cachedSurahAyahs = {};
-    _allAyahsForSearch = [];
+    _loadingQuranTextFuture = _loadQuranText();
+    await _loadingQuranTextFuture;
+  }
 
+  Future<void> _loadQuranText() async {
     try {
       final jsonStr = await rootBundle.loadString('assets/data/quran_text.json');
       final List<dynamic> surahsList = json.decode(jsonStr) as List<dynamic>;
+
+      final Map<int, List<AyahModel>> tempAyahs = {};
+      final List<Map<String, dynamic>> tempSearch = [];
 
       for (final surahJson in surahsList) {
         final surahNum = surahJson['number'] as int;
@@ -124,7 +135,7 @@ class QuranRepository {
           final ayah = AyahModel.fromJson(ayahRaw as Map<String, dynamic>);
           ayahs.add(ayah);
 
-          _allAyahsForSearch!.add({
+          tempSearch.add({
             'surah_number': surahNum,
             'surah_name': surahName,
             'ayah_number': ayah.numberInSurah,
@@ -133,10 +144,13 @@ class QuranRepository {
             'juz': ayah.juz,
           });
         }
-        _cachedSurahAyahs![surahNum] = ayahs;
+        tempAyahs[surahNum] = ayahs;
       }
+
+      _cachedSurahAyahs = tempAyahs;
+      _allAyahsForSearch = tempSearch;
     } catch (_) {
-      // Fallback: create placeholder ayahs if loading encounters any issue
+      _loadingQuranTextFuture = null;
     }
   }
 

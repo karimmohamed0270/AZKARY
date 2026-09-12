@@ -52,17 +52,23 @@ class _JuzDetailPageState extends State<JuzDetailPage> {
 
   Future<void> _loadJuzData() async {
     setState(() => _isLoading = true);
-    final segments = await _repository.getJuzSurahSegments(_currentJuzNumber);
-    if (mounted) {
-      setState(() {
-        _segments = segments;
-        _isLoading = false;
-      });
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+    try {
+      final segments = await _repository.getJuzSurahSegments(_currentJuzNumber);
+      if (mounted) {
+        setState(() {
+          _segments = segments;
+          _isLoading = false;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(0);
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -171,8 +177,29 @@ class _JuzDetailPageState extends State<JuzDetailPage> {
           ),
           body: _isLoading
               ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-              : ListView(
-                  controller: _scrollController,
+              : _segments.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.menu_book, size: 54, color: AppColors.primary),
+                          const SizedBox(height: 16),
+                          Text(
+                            'لم يتم العثور على بيانات هذا الجزء',
+                            style: TextStyle(fontSize: 16, color: textColor),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('إعادة المحاولة'),
+                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                            onPressed: _loadJuzData,
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView(
+                      controller: _scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   children: [
                     // Top Navigation Header between Juzs

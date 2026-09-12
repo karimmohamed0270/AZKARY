@@ -5,10 +5,13 @@ import 'package:azkari/core/services/location_service.dart';
 import 'package:azkari/features/prayer_times/data/prayer_calculator.dart';
 import 'package:azkari/features/quran/models/juz_model.dart';
 import 'package:azkari/features/quran/models/surah_model.dart';
+import 'package:azkari/features/quran/data/quran_repository.dart';
 import 'package:azkari/features/azkar/models/zikr_model.dart';
 import 'package:azkari/features/azkar/models/asmaa_allah_model.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('ArabicNumbers Utilities Test', () {
     test('Converts English digits to Eastern Arabic digits', () {
       expect(ArabicNumbers.convert(123), '١٢٣');
@@ -244,6 +247,22 @@ void main() {
           expect(next.startAyah, 1);
         }
       }
+    });
+
+    test('QuranRepository loads Juz segments cleanly without race condition', () async {
+      final repo = QuranRepository();
+      final segmentsJuz1 = await repo.getJuzSurahSegments(1);
+      expect(segmentsJuz1.isNotEmpty, isTrue);
+      expect(segmentsJuz1.length, 2); // Al-Fatiha and Al-Baqarah
+      final fatiha = segmentsJuz1[0]['surah'] as SurahModel;
+      expect(fatiha.number, 1);
+      expect(fatiha.nameAr, 'الفاتحة');
+
+      final segmentsJuz30 = await repo.getJuzSurahSegments(30);
+      expect(segmentsJuz30.isNotEmpty, isTrue);
+      final lastSurah = segmentsJuz30.last['surah'] as SurahModel;
+      expect(lastSurah.number, 114);
+      expect(lastSurah.nameAr, 'الناس');
     });
   });
 }

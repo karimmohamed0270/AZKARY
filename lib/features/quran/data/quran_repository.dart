@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../models/ayah_model.dart';
+import '../models/juz_model.dart';
 import '../models/surah_model.dart';
 
 class QuranRepository {
@@ -15,6 +16,40 @@ class QuranRepository {
     final List<dynamic> list = json.decode(jsonStr) as List<dynamic>;
     _cachedSurahs = list.map((e) => SurahModel.fromJson(e as Map<String, dynamic>)).toList();
     return _cachedSurahs!;
+  }
+
+  /// Get list of all 30 Quran Juz
+  List<JuzModel> getJuzs() {
+    return JuzModel.allJuzs;
+  }
+
+  /// Get Juz data grouped by Surah segments
+  Future<List<Map<String, dynamic>>> getJuzSurahSegments(int juzNumber) async {
+    await _ensureQuranTextLoaded();
+    final surahs = await getSurahs();
+    final List<Map<String, dynamic>> segments = [];
+
+    final juzModel = JuzModel.allJuzs.firstWhere(
+      (j) => j.number == juzNumber,
+      orElse: () => JuzModel.allJuzs.first,
+    );
+
+    for (int sNum = juzModel.startSurahNum; sNum <= juzModel.endSurahNum; sNum++) {
+      final surahMatches = surahs.where((s) => s.number == sNum);
+      if (surahMatches.isEmpty) continue;
+      final surah = surahMatches.first;
+      final allAyahsOfSurah = _cachedSurahAyahs?[sNum] ?? [];
+      final juzAyahs = allAyahsOfSurah.where((a) => a.juz == juzNumber).toList();
+
+      if (juzAyahs.isNotEmpty) {
+        segments.add({
+          'surah': surah,
+          'ayahs': juzAyahs,
+        });
+      }
+    }
+
+    return segments;
   }
 
   /// Load Surah Ayahs from quran_text.json

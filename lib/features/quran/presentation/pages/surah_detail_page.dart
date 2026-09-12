@@ -9,6 +9,7 @@ import '../../bloc/quran_bloc.dart';
 import '../../bloc/quran_event.dart';
 import '../../bloc/quran_state.dart';
 import '../../models/ayah_model.dart';
+import '../../models/juz_model.dart';
 import '../../models/surah_model.dart';
 
 class SurahDetailPage extends StatefulWidget {
@@ -312,6 +313,25 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
             ..onTap = () => _showAyahActionSheet(context, ayah, surah, cleanText, isBookmarked),
         ),
       );
+
+      // End of Juz indicator if this ayah concludes a Juz
+      final completedJuzMatches = JuzModel.allJuzs.where(
+        (j) => j.endSurahNum == widget.surahNumber && j.endAyah == ayah.numberInSurah,
+      );
+      if (completedJuzMatches.isNotEmpty) {
+        final cJuz = completedJuzMatches.first;
+        spans.add(
+          TextSpan(
+            text: '\n\n۩ نهاية الجزء ${ArabicNumbers.convert(cJuz.number)} (${cJuz.name}) ۩\n\n',
+            style: TextStyle(
+              fontSize: (state.fontSize * 0.9).clamp(16.0, 26.0),
+              fontWeight: FontWeight.bold,
+              color: AppColors.gold,
+              height: 2.6,
+            ),
+          ),
+        );
+      }
     }
 
     return spans;
@@ -434,7 +454,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           (b) => b['surah_number'] == widget.surahNumber && b['ayah_number'] == ayah.numberInSurah,
         );
 
-        return Card(
+        final cardWidget = Card(
           color: cardBg,
           margin: const EdgeInsets.symmetric(vertical: 6),
           shape: RoundedRectangleBorder(
@@ -548,6 +568,51 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
               ],
             ),
           ),
+        );
+
+        final completedJuzMatches = JuzModel.allJuzs.where(
+          (j) => j.endSurahNum == widget.surahNumber && j.endAyah == ayah.numberInSurah,
+        );
+
+        if (completedJuzMatches.isEmpty) {
+          return cardWidget;
+        }
+
+        final cJuz = completedJuzMatches.first;
+        return Column(
+          children: [
+            cardWidget,
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                gradient: AppColors.goldGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.gold.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.black, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    '۩ تم بحمد الله ختام الجزء ${ArabicNumbers.convert(cJuz.number)} (${cJuz.name}) ۩',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );

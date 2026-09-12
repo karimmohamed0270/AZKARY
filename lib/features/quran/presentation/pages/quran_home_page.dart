@@ -6,6 +6,8 @@ import '../../../../core/utils/arabic_numbers.dart';
 import '../../bloc/quran_bloc.dart';
 import '../../bloc/quran_event.dart';
 import '../../bloc/quran_state.dart';
+import '../../models/juz_model.dart';
+import 'juz_detail_page.dart';
 import 'surah_detail_page.dart';
 
 class QuranHomePage extends StatefulWidget {
@@ -22,7 +24,7 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -205,6 +207,7 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                         indicatorWeight: 3,
                         tabs: [
                           Tab(text: '${AppStrings.surahs} (${ArabicNumbers.convert(state.surahs.length)})'),
+                          Tab(text: 'الأجزاء (${ArabicNumbers.convert(30)})'),
                           Tab(text: '${AppStrings.bookmarks} (${ArabicNumbers.convert(state.bookmarks.length)})'),
                         ],
                       ),
@@ -213,6 +216,7 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                           controller: _tabController,
                           children: [
                             _buildSurahsList(context, state.filteredSurahs),
+                            _buildJuzsList(context),
                             _buildBookmarksList(context, state.bookmarks),
                           ],
                         ),
@@ -304,6 +308,134 @@ class _QuranHomePageState extends State<QuranHomePage> with SingleTickerProvider
                 ),
               );
             },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildJuzsList(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const juzs = JuzModel.allJuzs;
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: juzs.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final juz = juzs[index];
+
+        return Card(
+          margin: EdgeInsets.zero,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isDark ? Colors.grey.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.15),
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => JuzDetailPage(juzNumber: juz.number),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Text(
+                      ArabicNumbers.convert(juz.number),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'الجزء ${ArabicNumbers.convert(juz.number)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.gold.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                juz.name,
+                                style: TextStyle(
+                                  color: isDark ? AppColors.goldLight : AppColors.goldDark,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'من ${juz.startSurahName} (${ArabicNumbers.convert(juz.startAyah)}) إلى ${juz.endSurahName} (${ArabicNumbers.convert(juz.endAyah)})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${ArabicNumbers.convert(juz.versesCount)} آية',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },

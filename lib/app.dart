@@ -52,7 +52,9 @@ class _AzkariAppState extends State<AzkariApp> {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<PreferenceService>.value(value: getIt<PreferenceService>()),
+        RepositoryProvider<PreferenceService>.value(
+          value: getIt<PreferenceService>(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -60,7 +62,8 @@ class _AzkariAppState extends State<AzkariApp> {
             create: (_) => getIt<QuranBloc>()..add(LoadQuranSurahsEvent()),
           ),
           BlocProvider<PrayerTimesBloc>(
-            create: (_) => getIt<PrayerTimesBloc>()..add(LoadPrayerTimesEvent()),
+            create: (_) =>
+                getIt<PrayerTimesBloc>()..add(LoadPrayerTimesEvent()),
           ),
           BlocProvider<AzkarBloc>(
             create: (_) => getIt<AzkarBloc>()..add(LoadAzkarCategoriesEvent()),
@@ -76,10 +79,7 @@ class _AzkariAppState extends State<AzkariApp> {
           darkTheme: AppTheme.darkTheme,
           themeMode: _getThemeMode(),
           locale: const Locale('ar'),
-          supportedLocales: const [
-            Locale('ar'),
-            Locale('en'),
-          ],
+          supportedLocales: const [Locale('ar'), Locale('en')],
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,

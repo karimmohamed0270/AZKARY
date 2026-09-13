@@ -24,9 +24,9 @@ class NotificationService {
     // 1. Initialize Timezone database and configure device local timezone
     await _configureLocalTimezone();
 
-    // 2. Settings for Android & iOS (using 'ic_launcher' drawable resource name)
+    // 2. Settings for Android & iOS (using 'ic_notification' drawable resource with fallbacks)
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('ic_launcher');
+        AndroidInitializationSettings('ic_notification');
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -42,7 +42,17 @@ class NotificationService {
     try {
       await _notificationsPlugin.initialize(initSettings);
     } catch (e) {
-      debugPrint('NotificationPlugin init error: $e');
+      debugPrint('NotificationPlugin init with ic_notification failed: $e. Attempting fallback...');
+      try {
+        await _notificationsPlugin.initialize(
+          const InitializationSettings(
+            android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+            iOS: iosSettings,
+          ),
+        );
+      } catch (err) {
+        debugPrint('Fallback init error: $err');
+      }
     }
 
     // 3. Create Android Notification Channels (Required on Android 8.0+)
@@ -210,7 +220,7 @@ class NotificationService {
       priority: Priority.max,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('adhan'),
-      icon: 'ic_launcher',
+      icon: 'ic_notification',
       enableVibration: true,
       category: AndroidNotificationCategory.alarm,
       visibility: NotificationVisibility.public,
@@ -280,7 +290,7 @@ class NotificationService {
       priority: Priority.high,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('azkar_tone'),
-      icon: 'ic_launcher',
+      icon: 'ic_notification',
       enableVibration: true,
       category: AndroidNotificationCategory.reminder,
       visibility: NotificationVisibility.public,
@@ -340,7 +350,7 @@ class NotificationService {
       priority: Priority.max,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('adhan'),
-      icon: 'ic_launcher',
+      icon: 'ic_notification',
       enableVibration: true,
       category: AndroidNotificationCategory.alarm,
       visibility: NotificationVisibility.public,
@@ -370,14 +380,30 @@ class NotificationService {
         importance: Importance.max,
         priority: Priority.max,
         playSound: true,
-        icon: 'ic_launcher',
+        icon: 'ic_notification',
       );
-      await _notificationsPlugin.show(
-        889,
-        title,
-        body,
-        const NotificationDetails(android: fallbackDetails),
-      );
+      try {
+        await _notificationsPlugin.show(
+          889,
+          title,
+          body,
+          const NotificationDetails(android: fallbackDetails),
+        );
+      } catch (err2) {
+        debugPrint('Fallback notification with icon failed ($err2), attempting basic notification...');
+        const AndroidNotificationDetails minimalDetails = AndroidNotificationDetails(
+          'prayer_test_channel_minimal',
+          'تنبيهات الصلاة',
+          importance: Importance.max,
+          priority: Priority.max,
+        );
+        await _notificationsPlugin.show(
+          890,
+          title,
+          body,
+          const NotificationDetails(android: minimalDetails),
+        );
+      }
     }
   }
 

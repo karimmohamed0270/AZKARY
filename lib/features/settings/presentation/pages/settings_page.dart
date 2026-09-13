@@ -8,6 +8,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/presentation/widgets/update_dialog.dart';
 import '../../../../core/services/app_update_service.dart';
 import '../../../../core/services/audio_service.dart';
+import '../../../../core/services/location_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/preference_service.dart';
 import '../../../prayer_times/bloc/prayer_times_bloc.dart';
@@ -241,6 +242,14 @@ class _SettingsPageState extends State<SettingsPage> {
                           }
                         }
                       },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.battery_saver_rounded, color: AppColors.primary),
+                      title: const Text('استثناء من توفير البطارية (لدقة الأذان)'),
+                      subtitle: const Text('منع نظام الهاتف من تأخير صوت الأذان عند قفل الشاشة'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _showBatteryOptimizationDialog(context),
                     ),
                   ],
                 ),
@@ -594,5 +603,84 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       );
     }
+  }
+
+  void _showBatteryOptimizationDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.battery_alert_rounded, color: AppColors.primary, size: 28),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Text(
+                    'ضبط استهلاك البطارية للأذان',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'تفرض أنظمة أندرويد الحديثة وواجهات الشركات (سامسونج، شاومي، أوبو، هواوي) قيوداً صارمة لتوفير الطاقة، مما قد يؤخر صوت الأذان أو يمنع ظهوره وقت إغلاق الشاشة.',
+              style: TextStyle(fontSize: 14, height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade700.withOpacity(0.3)),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '📌 خطوات الضبط لضمان دقة الأذان:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  SizedBox(height: 6),
+                  Text('1. اضغط على زر "فتح إعدادات التطبيق" أدناه.', style: TextStyle(fontSize: 13)),
+                  Text('2. انزل إلى قسم "البطارية" (Battery).', style: TextStyle(fontSize: 13)),
+                  Text('3. اختر "غير مقيد" (Unrestricted) أو استثناء التطبيق من توفير الطاقة.', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: const Text('فتح إعدادات التطبيق'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await getIt<LocationService>().openAppSettings();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

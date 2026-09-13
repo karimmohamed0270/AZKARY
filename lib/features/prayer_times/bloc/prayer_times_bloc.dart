@@ -313,6 +313,8 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
           minute: 0,
         );
       }
-    } catch (_) {}
+    } catch (e, st) {
+      debugPrint('❌ _scheduleUpcomingNotifications error: $e\n$st');
+    }
   }
 }

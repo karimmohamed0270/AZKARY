@@ -37,13 +37,22 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   Future<void> _initPermissionsAndChecks() async {
     // 1. Prompt for notifications permission on Android 13+ / iOS
     try {
-      final granted = await getIt<NotificationService>().requestPermissions();
-      if (granted && mounted) {
-        context.read<PrayerTimesBloc>().add(LoadPrayerTimesEvent());
-      }
+      await getIt<NotificationService>().requestPermissions();
     } catch (_) {}
 
-    // 2. Check for updates in background after delay
+    // 2. Request Exact Alarm permission (Android 12+ requires this for
+    //    scheduled Adhan notifications to fire while idle/Doze mode).
+    try {
+      await getIt<NotificationService>().requestExactAlarmsPermission();
+    } catch (_) {}
+
+    // 3. Always load prayer times & schedule notifications (regardless of
+    //    whether the user granted the notification banner permission).
+    if (mounted) {
+      context.read<PrayerTimesBloc>().add(LoadPrayerTimesEvent());
+    }
+
+    // 4. Check for updates in background after delay
     await _checkUpdateSilently();
   }
 

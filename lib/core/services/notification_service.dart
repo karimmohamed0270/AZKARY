@@ -193,8 +193,12 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
     if (androidImpl != null) {
       try {
-        return await androidImpl.requestExactAlarmsPermission();
-      } catch (_) {}
+        final result = await androidImpl.requestExactAlarmsPermission();
+        debugPrint('🔔 Exact alarm permission result: $result');
+        return result;
+      } catch (e) {
+        debugPrint('❌ requestExactAlarmsPermission error: $e');
+      }
     }
     return true;
   }

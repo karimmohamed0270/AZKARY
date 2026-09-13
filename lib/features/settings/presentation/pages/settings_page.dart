@@ -535,7 +535,15 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(width: 12),
-            const Text(AppStrings.appName, style: TextStyle(fontWeight: FontWeight.bold)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text(AppStrings.appName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                SizedBox(height: 2),
+                Text('الإصدار 1.0.5', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
           ],
         ),
         content: Column(

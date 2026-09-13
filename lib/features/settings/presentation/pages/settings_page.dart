@@ -553,6 +553,28 @@ class _SettingsPageState extends State<SettingsPage> {
             Text('• بوصلة القبلة التفاعلية الفلكية'),
             Text('• حصن المسلم، الأذكار والمسبحة الإلكترونية الذكية'),
             Text('• التقويم الهجري والمناسبات الإسلامية وأيام الصيام'),
+            SizedBox(height: 16),
+            Divider(),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.code, size: 16, color: AppColors.primary),
+                SizedBox(width: 6),
+                Text(
+                  'طُوِّر بواسطة:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Text(
+              'كريم محمد حسن',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
           ],
         ),
         actions: [

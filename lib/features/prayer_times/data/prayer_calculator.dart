@@ -10,6 +10,12 @@ class PrayerCalculator {
     required bool isGps,
     String method = 'egyptian',
     String madhab = 'shafi',
+    int fajrAdjustment = 0,
+    int sunriseAdjustment = 0,
+    int dhuhrAdjustment = 0,
+    int asrAdjustment = 0,
+    int maghribAdjustment = 0,
+    int ishaAdjustment = 0,
     DateTime? targetDate,
   }) {
     final date = targetDate ?? DateTime.now();
@@ -21,6 +27,14 @@ class PrayerCalculator {
     } else {
       params.madhab = Madhab.shafi;
     }
+
+    // Apply manual minute adjustments
+    params.adjustments.fajr = fajrAdjustment;
+    params.adjustments.sunrise = sunriseAdjustment;
+    params.adjustments.dhuhr = dhuhrAdjustment;
+    params.adjustments.asr = asrAdjustment;
+    params.adjustments.maghrib = maghribAdjustment;
+    params.adjustments.isha = ishaAdjustment;
 
     final dateComponents = DateComponents.from(date);
     final prayerTimes = PrayerTimes(coordinates, dateComponents, params);

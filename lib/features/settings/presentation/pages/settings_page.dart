@@ -11,6 +11,7 @@ import '../../../../core/services/audio_service.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/preference_service.dart';
+import '../../../../core/utils/arabic_numbers.dart';
 import '../../../prayer_times/bloc/prayer_times_bloc.dart';
 import '../../../prayer_times/bloc/prayer_times_event.dart';
 import '../../../prayer_times/bloc/prayer_times_state.dart';
@@ -110,6 +111,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: Text(currentMadhab == 'hanafi' ? 'المذهب الحنفي' : 'الجمهور (شافعي، مالكي، حنبلي)'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _showMadhabDialog(context, currentMadhab),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.tune_rounded, color: AppColors.primary),
+                      title: const Text('تعديل المواقيت بالدقائق'),
+                      subtitle: Text(_getAdjustmentsSummary(state)),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                      onTap: () => _showPrayerAdjustmentsSheet(context, state),
                     ),
                   ],
                 ),
@@ -603,6 +612,319 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       );
     }
+  }
+
+  String _getAdjustmentsSummary(PrayerTimesState state) {
+    final list = <String>[];
+    if (state.fajrAdjustment != 0) {
+      list.add('الفجر (${state.fajrAdjustment > 0 ? '+' : ''}${ArabicNumbers.convert(state.fajrAdjustment)})');
+    }
+    if (state.dhuhrAdjustment != 0) {
+      list.add('الظهر (${state.dhuhrAdjustment > 0 ? '+' : ''}${ArabicNumbers.convert(state.dhuhrAdjustment)})');
+    }
+    if (state.asrAdjustment != 0) {
+      list.add('العصر (${state.asrAdjustment > 0 ? '+' : ''}${ArabicNumbers.convert(state.asrAdjustment)})');
+    }
+    if (state.maghribAdjustment != 0) {
+      list.add('المغرب (${state.maghribAdjustment > 0 ? '+' : ''}${ArabicNumbers.convert(state.maghribAdjustment)})');
+    }
+    if (state.ishaAdjustment != 0) {
+      list.add('العشاء (${state.ishaAdjustment > 0 ? '+' : ''}${ArabicNumbers.convert(state.ishaAdjustment)})');
+    }
+
+    if (list.isEmpty) {
+      return 'تعديل يدوي لمطابقة أذان المسجد (+/- دقائق)';
+    }
+    return list.join('، ');
+  }
+
+  void _showPrayerAdjustmentsSheet(BuildContext context, PrayerTimesState state) {
+    int fajr = state.fajrAdjustment;
+    int sunrise = state.sunriseAdjustment;
+    int dhuhr = state.dhuhrAdjustment;
+    int asr = state.asrAdjustment;
+    int maghrib = state.maghribAdjustment;
+    int isha = state.ishaAdjustment;
+
+    final baseFajr = state.prayerTimes != null
+        ? state.prayerTimes!.fajr.subtract(Duration(minutes: state.fajrAdjustment))
+        : null;
+    final baseSunrise = state.prayerTimes != null
+        ? state.prayerTimes!.sunrise.subtract(Duration(minutes: state.sunriseAdjustment))
+        : null;
+    final baseDhuhr = state.prayerTimes != null
+        ? state.prayerTimes!.dhuhr.subtract(Duration(minutes: state.dhuhrAdjustment))
+        : null;
+    final baseAsr = state.prayerTimes != null
+        ? state.prayerTimes!.asr.subtract(Duration(minutes: state.asrAdjustment))
+        : null;
+    final baseMaghrib = state.prayerTimes != null
+        ? state.prayerTimes!.maghrib.subtract(Duration(minutes: state.maghribAdjustment))
+        : null;
+    final baseIsha = state.prayerTimes != null
+        ? state.prayerTimes!.isha.subtract(Duration(minutes: state.ishaAdjustment))
+        : null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            Widget buildAdjustItem({
+              required String title,
+              required IconData icon,
+              required int value,
+              required DateTime? baseTime,
+              required ValueChanged<int> onChanged,
+            }) {
+              final adjustedTime = baseTime?.add(Duration(minutes: value));
+              final formattedTime = adjustedTime != null
+                  ? ArabicNumbers.formatTime12h(adjustedTime)
+                  : '--:--';
+              final isModified = value != 0;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isModified
+                        ? AppColors.primary.withOpacity(0.08)
+                        : Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isModified
+                          ? AppColors.primary.withOpacity(0.4)
+                          : Theme.of(context).dividerColor.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: AppColors.primary, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                            Text(
+                              formattedTime,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isModified ? AppColors.primary : Colors.grey.shade600,
+                                fontWeight: isModified ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Decrement button
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.remove_circle_outline, size: 24),
+                        color: value > -30 ? Colors.red.shade700 : Colors.grey.shade400,
+                        onPressed: value > -30
+                            ? () => setSheetState(() => onChanged(value - 1))
+                            : null,
+                      ),
+                      // Value badge
+                      Container(
+                        constraints: const BoxConstraints(minWidth: 54),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isModified
+                              ? AppColors.primary
+                              : Colors.grey.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          value == 0
+                              ? '٠ د'
+                              : '${value > 0 ? '+' : ''}${ArabicNumbers.convert(value)} د',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: isModified ? Colors.white : null,
+                          ),
+                        ),
+                      ),
+                      // Increment button
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.add_circle_outline, size: 24),
+                        color: value < 30 ? AppColors.primary : Colors.grey.shade400,
+                        onPressed: value < 30
+                            ? () => setSheetState(() => onChanged(value + 1))
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.tune_rounded, color: AppColors.primary, size: 26),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'تعديل المواقيت بالدقائق',
+                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'قم بزيادة أو إنقاص الدقائق لتتطابق تماماً مع مسجدك',
+                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    buildAdjustItem(
+                      title: 'صلاة الفجر',
+                      icon: Icons.wb_twilight,
+                      value: fajr,
+                      baseTime: baseFajr,
+                      onChanged: (v) => fajr = v,
+                    ),
+                    buildAdjustItem(
+                      title: 'الشروق',
+                      icon: Icons.wb_sunny_outlined,
+                      value: sunrise,
+                      baseTime: baseSunrise,
+                      onChanged: (v) => sunrise = v,
+                    ),
+                    buildAdjustItem(
+                      title: 'صلاة الظهر',
+                      icon: Icons.wb_sunny,
+                      value: dhuhr,
+                      baseTime: baseDhuhr,
+                      onChanged: (v) => dhuhr = v,
+                    ),
+                    buildAdjustItem(
+                      title: 'صلاة العصر',
+                      icon: Icons.filter_drama,
+                      value: asr,
+                      baseTime: baseAsr,
+                      onChanged: (v) => asr = v,
+                    ),
+                    buildAdjustItem(
+                      title: 'صلاة المغرب',
+                      icon: Icons.nights_stay_outlined,
+                      value: maghrib,
+                      baseTime: baseMaghrib,
+                      onChanged: (v) => maghrib = v,
+                    ),
+                    buildAdjustItem(
+                      title: 'صلاة العشاء',
+                      icon: Icons.bedtime,
+                      value: isha,
+                      baseTime: baseIsha,
+                      onChanged: (v) => isha = v,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.refresh_rounded),
+                            label: const Text('إعادة ضبط'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(sheetCtx);
+                              context.read<PrayerTimesBloc>().add(ResetPrayerAdjustmentsEvent());
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('تمت استعادة المواقيت الافتراضية بنجاح.'),
+                                  backgroundColor: AppColors.primary,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text('حفظ وتطبيق'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(sheetCtx);
+                              context.read<PrayerTimesBloc>().add(
+                                UpdatePrayerAdjustmentsEvent(
+                                  fajr: fajr,
+                                  sunrise: sunrise,
+                                  dhuhr: dhuhr,
+                                  asr: asr,
+                                  maghrib: maghrib,
+                                  isha: isha,
+                                ),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('تم حفظ وتطبيق تعديل المواقيت بنجاح! 🕌'),
+                                  backgroundColor: AppColors.primary,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showBatteryOptimizationDialog(BuildContext context) {

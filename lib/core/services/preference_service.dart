@@ -15,6 +15,14 @@ class PreferenceService {
   static const String _keyLongitude = 'longitude';
   static const String _keyIsGpsLocation = 'is_gps_location';
 
+  // Prayer Adjustments (Minutes)
+  static const String _keyFajrAdjustment = 'fajr_adjustment';
+  static const String _keySunriseAdjustment = 'sunrise_adjustment';
+  static const String _keyDhuhrAdjustment = 'dhuhr_adjustment';
+  static const String _keyAsrAdjustment = 'asr_adjustment';
+  static const String _keyMaghribAdjustment = 'maghrib_adjustment';
+  static const String _keyIshaAdjustment = 'isha_adjustment';
+
   // Quran Bookmarks & Last Read
   static const String _keyLastReadSurah = 'last_read_surah';
   static const String _keyLastReadSurahName = 'last_read_surah_name';
@@ -43,6 +51,39 @@ class PreferenceService {
 
   String getMadhab() => _prefs.getString(_keyMadhab) ?? 'shafi';
   Future<void> setMadhab(String madhab) => _prefs.setString(_keyMadhab, madhab);
+
+  // --- Prayer Adjustments (in minutes) ---
+  int getFajrAdjustment() => _prefs.getInt(_keyFajrAdjustment) ?? 0;
+  int getSunriseAdjustment() => _prefs.getInt(_keySunriseAdjustment) ?? 0;
+  int getDhuhrAdjustment() => _prefs.getInt(_keyDhuhrAdjustment) ?? 0;
+  int getAsrAdjustment() => _prefs.getInt(_keyAsrAdjustment) ?? 0;
+  int getMaghribAdjustment() => _prefs.getInt(_keyMaghribAdjustment) ?? 0;
+  int getIshaAdjustment() => _prefs.getInt(_keyIshaAdjustment) ?? 0;
+
+  Future<void> setPrayerAdjustments({
+    int? fajr,
+    int? sunrise,
+    int? dhuhr,
+    int? asr,
+    int? maghrib,
+    int? isha,
+  }) async {
+    if (fajr != null) await _prefs.setInt(_keyFajrAdjustment, fajr);
+    if (sunrise != null) await _prefs.setInt(_keySunriseAdjustment, sunrise);
+    if (dhuhr != null) await _prefs.setInt(_keyDhuhrAdjustment, dhuhr);
+    if (asr != null) await _prefs.setInt(_keyAsrAdjustment, asr);
+    if (maghrib != null) await _prefs.setInt(_keyMaghribAdjustment, maghrib);
+    if (isha != null) await _prefs.setInt(_keyIshaAdjustment, isha);
+  }
+
+  Future<void> resetPrayerAdjustments() async {
+    await _prefs.remove(_keyFajrAdjustment);
+    await _prefs.remove(_keySunriseAdjustment);
+    await _prefs.remove(_keyDhuhrAdjustment);
+    await _prefs.remove(_keyAsrAdjustment);
+    await _prefs.remove(_keyMaghribAdjustment);
+    await _prefs.remove(_keyIshaAdjustment);
+  }
 
   // --- Location & City ---
   String getCityNameAr() => _prefs.getString(_keyCityNameAr) ?? 'القاهرة';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/preference_service.dart';
 import '../../../../core/utils/arabic_numbers.dart';
 import '../../../../core/utils/hijri_helper.dart';
 import '../../bloc/prayer_times_bloc.dart';
@@ -17,6 +18,9 @@ class PrayerSchedulePage extends StatelessWidget {
     return BlocBuilder<PrayerTimesBloc, PrayerTimesState>(
       builder: (context, state) {
         final cityName = state.prayerTimes?.cityName ?? 'القاهرة';
+        final prefService = RepositoryProvider.of<PreferenceService>(context);
+        final lat = prefService.getLatitude();
+        final lng = prefService.getLongitude();
         final now = DateTime.now();
         final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
 
@@ -33,12 +37,18 @@ class PrayerSchedulePage extends StatelessWidget {
               final isToday = dayDate.day == now.day;
 
               final dayPrayers = PrayerCalculator.calculate(
-                latitude: state.prayerTimes != null ? (state.prayerTimes!.isGps ? 30.0444 : 30.0444) : 30.0444,
-                longitude: 31.2357,
+                latitude: lat,
+                longitude: lng,
                 cityName: cityName,
-                isGps: false,
+                isGps: state.prayerTimes?.isGps ?? false,
                 method: state.selectedMethod,
                 madhab: state.selectedMadhab,
+                fajrAdjustment: state.fajrAdjustment,
+                sunriseAdjustment: state.sunriseAdjustment,
+                dhuhrAdjustment: state.dhuhrAdjustment,
+                asrAdjustment: state.asrAdjustment,
+                maghribAdjustment: state.maghribAdjustment,
+                ishaAdjustment: state.ishaAdjustment,
                 targetDate: dayDate,
               );
 

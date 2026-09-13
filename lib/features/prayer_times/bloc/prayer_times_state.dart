@@ -13,6 +13,12 @@ class PrayerTimesState extends Equatable {
   final double distanceToKaabaKm;
   final double qiblaAngleDegrees;
   final String? errorMessage;
+  final int fajrAdjustment;
+  final int sunriseAdjustment;
+  final int dhuhrAdjustment;
+  final int asrAdjustment;
+  final int maghribAdjustment;
+  final int ishaAdjustment;
 
   const PrayerTimesState({
     this.status = PrayerTimesStatus.initial,
@@ -23,6 +29,12 @@ class PrayerTimesState extends Equatable {
     this.distanceToKaabaKm = 0.0,
     this.qiblaAngleDegrees = 0.0,
     this.errorMessage,
+    this.fajrAdjustment = 0,
+    this.sunriseAdjustment = 0,
+    this.dhuhrAdjustment = 0,
+    this.asrAdjustment = 0,
+    this.maghribAdjustment = 0,
+    this.ishaAdjustment = 0,
   });
 
   PrayerTimesState copyWith({
@@ -34,6 +46,12 @@ class PrayerTimesState extends Equatable {
     double? distanceToKaabaKm,
     double? qiblaAngleDegrees,
     String? errorMessage,
+    int? fajrAdjustment,
+    int? sunriseAdjustment,
+    int? dhuhrAdjustment,
+    int? asrAdjustment,
+    int? maghribAdjustment,
+    int? ishaAdjustment,
   }) {
     return PrayerTimesState(
       status: status ?? this.status,
@@ -44,6 +62,12 @@ class PrayerTimesState extends Equatable {
       distanceToKaabaKm: distanceToKaabaKm ?? this.distanceToKaabaKm,
       qiblaAngleDegrees: qiblaAngleDegrees ?? this.qiblaAngleDegrees,
       errorMessage: errorMessage ?? this.errorMessage,
+      fajrAdjustment: fajrAdjustment ?? this.fajrAdjustment,
+      sunriseAdjustment: sunriseAdjustment ?? this.sunriseAdjustment,
+      dhuhrAdjustment: dhuhrAdjustment ?? this.dhuhrAdjustment,
+      asrAdjustment: asrAdjustment ?? this.asrAdjustment,
+      maghribAdjustment: maghribAdjustment ?? this.maghribAdjustment,
+      ishaAdjustment: ishaAdjustment ?? this.ishaAdjustment,
     );
   }
 
@@ -57,5 +81,12 @@ class PrayerTimesState extends Equatable {
         distanceToKaabaKm,
         qiblaAngleDegrees,
         errorMessage,
+        fajrAdjustment,
+        sunriseAdjustment,
+        dhuhrAdjustment,
+        asrAdjustment,
+        maghribAdjustment,
+        ishaAdjustment,
       ];
 }
+

@@ -24,6 +24,8 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
     on<FetchGpsLocationEvent>(_onFetchGpsLocation);
     on<UpdateCalculationMethodEvent>(_onUpdateMethod);
     on<UpdateMadhabEvent>(_onUpdateMadhab);
+    on<UpdatePrayerAdjustmentsEvent>(_onUpdatePrayerAdjustments);
+    on<ResetPrayerAdjustmentsEvent>(_onResetPrayerAdjustments);
 
     // Start 1-second ticker timer for real-time countdown
     _tickerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -51,6 +53,13 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
       final method = preferenceService.getCalculationMethod();
       final madhab = preferenceService.getMadhab();
 
+      final fajrAdj = preferenceService.getFajrAdjustment();
+      final sunriseAdj = preferenceService.getSunriseAdjustment();
+      final dhuhrAdj = preferenceService.getDhuhrAdjustment();
+      final asrAdj = preferenceService.getAsrAdjustment();
+      final maghribAdj = preferenceService.getMaghribAdjustment();
+      final ishaAdj = preferenceService.getIshaAdjustment();
+
       final prayerTimes = PrayerCalculator.calculate(
         latitude: lat,
         longitude: lng,
@@ -58,6 +67,12 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
         isGps: isGps,
         method: method,
         madhab: madhab,
+        fajrAdjustment: fajrAdj,
+        sunriseAdjustment: sunriseAdj,
+        dhuhrAdjustment: dhuhrAdj,
+        asrAdjustment: asrAdj,
+        maghribAdjustment: maghribAdj,
+        ishaAdjustment: ishaAdj,
       );
 
       final distance = locationService.calculateDistanceToKaaba(lat, lng);
@@ -71,10 +86,28 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
         selectedMadhab: madhab,
         distanceToKaabaKm: distance,
         qiblaAngleDegrees: qiblaAngle,
+        fajrAdjustment: fajrAdj,
+        sunriseAdjustment: sunriseAdj,
+        dhuhrAdjustment: dhuhrAdj,
+        asrAdjustment: asrAdj,
+        maghribAdjustment: maghribAdj,
+        ishaAdjustment: ishaAdj,
       ));
 
       // Schedule offline notifications for the prayers
-      await _scheduleUpcomingNotifications(lat, lng, cityName, method, madhab);
+      await _scheduleUpcomingNotifications(
+        lat: lat,
+        lng: lng,
+        cityName: cityName,
+        method: method,
+        madhab: madhab,
+        fajrAdj: fajrAdj,
+        sunriseAdj: sunriseAdj,
+        dhuhrAdj: dhuhrAdj,
+        asrAdj: asrAdj,
+        maghribAdj: maghribAdj,
+        ishaAdj: ishaAdj,
+      );
     } catch (e) {
       emit(state.copyWith(
         status: PrayerTimesStatus.error,
@@ -103,6 +136,12 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
       isGps: isGps,
       method: method,
       madhab: madhab,
+      fajrAdjustment: state.fajrAdjustment,
+      sunriseAdjustment: state.sunriseAdjustment,
+      dhuhrAdjustment: state.dhuhrAdjustment,
+      asrAdjustment: state.asrAdjustment,
+      maghribAdjustment: state.maghribAdjustment,
+      ishaAdjustment: state.ishaAdjustment,
     );
 
     emit(state.copyWith(prayerTimes: updated));
@@ -171,13 +210,42 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
     add(LoadPrayerTimesEvent());
   }
 
-  Future<void> _scheduleUpcomingNotifications(
-    double lat,
-    double lng,
-    String cityName,
-    String method,
-    String madhab,
+  Future<void> _onUpdatePrayerAdjustments(
+    UpdatePrayerAdjustmentsEvent event,
+    Emitter<PrayerTimesState> emit,
   ) async {
+    await preferenceService.setPrayerAdjustments(
+      fajr: event.fajr,
+      sunrise: event.sunrise,
+      dhuhr: event.dhuhr,
+      asr: event.asr,
+      maghrib: event.maghrib,
+      isha: event.isha,
+    );
+    add(LoadPrayerTimesEvent());
+  }
+
+  Future<void> _onResetPrayerAdjustments(
+    ResetPrayerAdjustmentsEvent event,
+    Emitter<PrayerTimesState> emit,
+  ) async {
+    await preferenceService.resetPrayerAdjustments();
+    add(LoadPrayerTimesEvent());
+  }
+
+  Future<void> _scheduleUpcomingNotifications({
+    required double lat,
+    required double lng,
+    required String cityName,
+    required String method,
+    required String madhab,
+    required int fajrAdj,
+    required int sunriseAdj,
+    required int dhuhrAdj,
+    required int asrAdj,
+    required int maghribAdj,
+    required int ishaAdj,
+  }) async {
     try {
       // Clear previous scheduled alarms before setting updated ones
       await notificationService.cancelAllNotifications();
@@ -195,6 +263,12 @@ class PrayerTimesBloc extends Bloc<PrayerTimesEvent, PrayerTimesState> {
             isGps: false,
             method: method,
             madhab: madhab,
+            fajrAdjustment: fajrAdj,
+            sunriseAdjustment: sunriseAdj,
+            dhuhrAdjustment: dhuhrAdj,
+            asrAdjustment: asrAdj,
+            maghribAdjustment: maghribAdj,
+            ishaAdjustment: ishaAdj,
             targetDate: targetDate,
           );
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/arabic_numbers.dart';
+import 'prayer_alarm_sheet.dart';
 
 class PrayerRowItem extends StatelessWidget {
   final String prayerName;
@@ -72,6 +73,33 @@ class PrayerRowItem extends StatelessWidget {
               color: isNext
                   ? (isDark ? AppColors.goldLight : AppColors.primary)
                   : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: 'ضبط منبه الهاتف',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  PrayerAlarmSheet.show(
+                    context,
+                    prayerName: prayerName,
+                    prayerTime: prayerTime,
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: Icon(
+                    Icons.alarm_add_rounded,
+                    size: 20,
+                    color: isNext
+                        ? (isDark ? AppColors.goldLight : AppColors.primary)
+                        : (isDark ? Colors.white70 : Colors.black45),
+                  ),
+                ),
+              ),
             ),
           ),
         ],

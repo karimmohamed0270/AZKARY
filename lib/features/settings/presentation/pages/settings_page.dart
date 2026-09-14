@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -7,9 +6,6 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/presentation/widgets/update_dialog.dart';
 import '../../../../core/services/app_update_service.dart';
-import '../../../../core/services/audio_service.dart';
-import '../../../../core/services/location_service.dart';
-import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/preference_service.dart';
 import '../../../../core/utils/arabic_numbers.dart';
 import '../../../prayer_times/bloc/prayer_times_bloc.dart';
@@ -28,36 +24,14 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late PreferenceService _prefService;
-  bool _adhanNotif = true;
-  bool _azkarNotif = true;
   String _currentTheme = 'system';
   bool _isCheckingUpdate = false;
-  bool _isPlayingAdhan = false;
-  StreamSubscription<PlayerState>? _audioSubscription;
 
   @override
   void initState() {
     super.initState();
     _prefService = RepositoryProvider.of<PreferenceService>(context);
-    _adhanNotif = _prefService.isAdhanNotificationEnabled();
-    _azkarNotif = _prefService.isAzkarNotificationEnabled();
     _currentTheme = _prefService.getThemeMode();
-
-    _audioSubscription =
-        getIt<AudioService>().onPlayerStateChanged.listen((pState) {
-      if (mounted) {
-        setState(() {
-          _isPlayingAdhan = pState == PlayerState.playing;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _audioSubscription?.cancel();
-    getIt<AudioService>().stopAudio();
-    super.dispose();
   }
 
   @override
@@ -126,147 +100,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
               const SizedBox(height: 20),
 
-              // Section 2: Notifications
-              _buildSectionHeader(AppStrings.notifications),
-              Card(
-                child: Column(
-                  children: [
-                    SwitchListTile(
-                      secondary: const Icon(Icons.notifications_active, color: AppColors.primary),
-                      title: const Text(AppStrings.adhanNotification),
-                      subtitle: const Text('تنبيه الأذان بصوت الأذان والتكبيرات عند كل صلاة'),
-                      value: _adhanNotif,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (val) async {
-                        setState(() => _adhanNotif = val);
-                        if (val) {
-                          await getIt<NotificationService>().requestPermissions();
-                        }
-                        await _prefService.setAdhanNotification(val);
-                        if (mounted) {
-                          context.read<PrayerTimesBloc>().add(LoadPrayerTimesEvent());
-                        }
-                      },
-                    ),
-                    const Divider(height: 1),
-                    SwitchListTile(
-                      secondary: const Icon(Icons.alarm, color: AppColors.primary),
-                      title: const Text('تنبيه الأذكار اليومية'),
-                      subtitle: const Text('تذكير يومي بأذكار الصباح (6:30 ص) والمساء (5:00 م)'),
-                      value: _azkarNotif,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (val) async {
-                        setState(() => _azkarNotif = val);
-                        if (val) {
-                          await getIt<NotificationService>().requestPermissions();
-                        }
-                        await _prefService.setAzkarNotification(val);
-                        if (mounted) {
-                          context.read<PrayerTimesBloc>().add(LoadPrayerTimesEvent());
-                        }
-                      },
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: Icon(
-                        _isPlayingAdhan ? Icons.stop_circle : Icons.volume_up_rounded,
-                        color: AppColors.primary,
-                        size: 26,
-                      ),
-                      title: Text(_isPlayingAdhan ? 'إيقاف صوت الأذان' : 'الاستماع لصوت الأذان (معاينة)'),
-                      subtitle: const Text('تجربة صوت الأذان المعتمد لمواقيت الصلاة'),
-                      trailing: Icon(
-                        _isPlayingAdhan ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                        color: AppColors.primary,
-                        size: 26,
-                      ),
-                      onTap: () async {
-                        final audioService = getIt<AudioService>();
-                        if (_isPlayingAdhan) {
-                          await audioService.stopAudio();
-                        } else {
-                          await audioService.playAdhan();
-                        }
-                      },
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.notifications_active_outlined, color: AppColors.primary),
-                      title: const Text('إرسال إشعار تجريبي بالصوت الآن'),
-                      subtitle: const Text('اختبار ظهور إشعار الأذان وتشغيل الصوت على هاتفك فوراً'),
-                      trailing: const Icon(Icons.send_rounded, size: 18, color: AppColors.primary),
-                      onTap: () async {
-                        try {
-                          final notifService = getIt<NotificationService>();
-                          
-                          final hasPerm = await notifService.requestPermissions();
-                          if (!hasPerm && mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Row(
-                                  children: [
-                                    Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-                                    SizedBox(width: 8),
-                                    Expanded(child: Text('يرجى التأكد من تفعيل إذن الإشعارات من إعدادات الهاتف')),
-                                  ],
-                                ),
-                                backgroundColor: Colors.orange.shade800,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                            );
-                          }
-
-                          await notifService.showInstantNotification(
-                            title: '🕌 حان الآن موعد الأذان (إشعار تجريبي)',
-                            body: 'حي على الصلاة، حي على الفلاح.. تم اختبار الصوت والتنبيه بنجاح.',
-                          );
-
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Row(
-                                  children: [
-                                    Icon(Icons.check_circle, color: Colors.white, size: 20),
-                                    SizedBox(width: 8),
-                                    Expanded(child: Text('تم إرسال إشعار تجريبي بصوت الأذان! تفقد شريط الإشعارات 🔔')),
-                                  ],
-                                ),
-                                backgroundColor: AppColors.primary,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('حدث خطأ أثناء الإشعار: $e'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.battery_saver_rounded, color: AppColors.primary),
-                      title: const Text('استثناء من توفير البطارية (لدقة الأذان)'),
-                      subtitle: const Text('منع نظام الهاتف من تأخير صوت الأذان عند قفل الشاشة'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                      onTap: () => _showBatteryOptimizationDialog(context),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Section 3: Appearance & Theme
+              // Section 2: Appearance & Theme
               _buildSectionHeader('المظهر والثيم'),
               Card(
                 child: Column(
@@ -292,7 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ListTile(
                       leading: const Icon(Icons.info_outline, color: AppColors.primary),
                       title: const Text(AppStrings.aboutApp),
-                      subtitle: const Text('تطبيق أذكاري - الإصدار 1.0.0 (Offline-First)'),
+                      subtitle: const Text('تطبيق أذكاري - الإصدار 1.0.6 (Offline-First)'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                       onTap: () => _showAboutAppDialog(context),
                     ),
@@ -541,28 +375,32 @@ class _SettingsPageState extends State<SettingsPage> {
               children: const [
                 Text(AppStrings.appName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 SizedBox(height: 2),
-                Text('الإصدار 1.0.5', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('الإصدار 1.0.6', style: TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
-              'تطبيق إسلامي متكامل يعمل بالكامل دون الحاجة للاتصال بالإنترنت (Offline-First).',
-              style: TextStyle(fontSize: 14, height: 1.5),
-            ),
-            SizedBox(height: 12),
-            Text('الميزات الأساسية:', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('• القرآن الكريم كاملاً بـ ١١٤ سورة والبحث الفوري'),
-            Text('• حساب دقيق لمواقيت الصلاة محلياً لجميع بلدان العالم'),
-            Text('• بوصلة القبلة التفاعلية الفلكية'),
-            Text('• حصن المسلم، الأذكار والمسبحة الإلكترونية الذكية'),
-            Text('• التقويم الهجري والمناسبات الإسلامية وأيام الصيام'),
-            SizedBox(height: 16),
-            Divider(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'تطبيق إسلامي متكامل يعمل بالكامل دون الحاجة للاتصال بالإنترنت (Offline-First).',
+                style: TextStyle(fontSize: 14, height: 1.5),
+              ),
+              SizedBox(height: 12),
+              Text('مزايا التطبيق:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              SizedBox(height: 6),
+              Text('• ضبط منبه الهاتف الرسمي لكل صلاة والتنبيه قبل الأذان'),
+              Text('• حساب دقيق لمواقيت الصلاة محلياً وتعديل الدقائق وجدول الشهر'),
+              Text('• القرآن الكريم كاملاً بـ ١١٤ سورة والبحث الفوري وتتبع الختمات'),
+              Text('• حصن المسلم، أذكار الصباح والمساء، وأسماء الله الحسنى'),
+              Text('• المسبحة الإلكترونية الذكية مع عداد يومي وإحصائيات'),
+              Text('• التقويم الهجري والمناسبات الإسلامية وأيام الصيام المباركة'),
+              Text('• يعمل بالكامل دون اتصال بالإنترنت وبدون أي إعلانات'),
+              SizedBox(height: 16),
+              Divider(),
             SizedBox(height: 8),
             Row(
               children: [
@@ -585,7 +423,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
-        actions: [
+      ),
+      actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('إغلاق', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
@@ -954,85 +793,6 @@ class _SettingsPageState extends State<SettingsPage> {
           },
         );
       },
-    );
-  }
-
-  void _showBatteryOptimizationDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.battery_alert_rounded, color: AppColors.primary, size: 28),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Text(
-                    'ضبط استهلاك البطارية للأذان',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'تفرض أنظمة أندرويد الحديثة وواجهات الشركات (سامسونج، شاومي، أوبو، هواوي) قيوداً صارمة لتوفير الطاقة، مما قد يؤخر صوت الأذان أو يمنع ظهوره وقت إغلاق الشاشة.',
-              style: TextStyle(fontSize: 14, height: 1.5),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.amber.shade700.withOpacity(0.3)),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '📌 خطوات الضبط لضمان دقة الأذان:',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  SizedBox(height: 6),
-                  Text('1. اضغط على زر "فتح إعدادات التطبيق" أدناه.', style: TextStyle(fontSize: 13)),
-                  Text('2. انزل إلى قسم "البطارية" (Battery).', style: TextStyle(fontSize: 13)),
-                  Text('3. اختر "غير مقيد" (Unrestricted) أو استثناء التطبيق من توفير الطاقة.', style: TextStyle(fontSize: 13)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.open_in_new_rounded),
-              label: const Text('فتح إعدادات التطبيق'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await getIt<LocationService>().openAppSettings();
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
